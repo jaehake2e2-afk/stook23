@@ -31,7 +31,7 @@
 
         <!-- 1. 주식 탭 -->
         <section id="tab-stock" class="space-y-4">
-            <h2 class="text-xl font-bold text-gray-800">실시간 시장</h2>
+            <h2 class="text-xl font-bold text-gray-800">실시간 시장 (동기화됨)</h2>
             <div class="flex gap-2 overflow-x-auto pb-2" id="stock-list-container">
                 <!-- 종목 버튼들이 동적으로 생성됨 -->
             </div>
@@ -213,17 +213,10 @@
         let stockChart = null;
         let currentUser = localStorage.getItem('sim_current_user') || null;
 
-        // 종목별 초기 가격 및 히스토리 세팅
+        // 기본 뼈대 세팅 (실시간 데이터 로드 전 임시값)
         stockNames.forEach(name => {
-            let basePrice = name.includes("비트코인") ? 90000000 : (name.includes("이더리움") ? 4500000 : Math.floor(Math.random() * 300000) + 20000);
-            let history = [];
-            let current = basePrice;
-            for(let i=0; i<15; i++) {
-                let change = (Math.random() - 0.48) * (basePrice * 0.02);
-                current = Math.max(100, Math.floor(current + change));
-                history.push(current);
-            }
-            stocks[name] = { price: current, history: history };
+            let basePrice = name.includes("비트코인") ? 90000000 : (name.includes("이더리움") ? 4500000 : 50000);
+            stocks[name] = { price: basePrice, history: Array(15).fill(basePrice) };
         });
 
         // 탭 전환 함수
@@ -293,28 +286,70 @@
 
         function updateStockView() {
             document.getElementById('selected-stock-name').innerText = currentSelectedStock;
-            let currentPrice = stocks[currentSelectedStock].price;
-            document.getElementById('selected-stock-price').innerText = currentPrice.toLocaleString() + " 원";
-            stockChart.data.datasets[0].data = stocks[currentSelectedStock].history;
-            stockChart.update();
+            if (stocks[currentSelectedStock]) {
+                let currentPrice = stocks[currentSelectedStock].price;
+                document.getElementById('selected-stock-price').innerText = currentPrice.toLocaleString() + " 원";
+                stockChart.data.datasets[0].data = stocks[currentSelectedStock].history;
+                stockChart.update();
+            }
             loadUserPortfolio();
         }
 
-        function startMarketEngine() {
-            setInterval(() => {
+        // --- Firebase 실시간 주가 동기화 및 엔진 ---
+        async function initMarketSync() {
+            const marketRef = window.FB.doc(window.db, "market", "prices");
+            const marketSnap = await window.FB.getDoc(marketRef);
+
+            // 데이터베이스에 시장 정보가 없으면 최초 생성 (방장 역할을 하는 유저가 처음 실행할 때 생성됨)
+            if (!marketSnap.exists()) {
+                let initialMarketData = {};
                 stockNames.forEach(name => {
-                    let st = stocks[name];
-                    let fluctuation = (Math.random() - 0.49) * (st.price * 0.03);
-                    st.price = Math.max(10, Math.floor(st.price + fluctuation));
-                    st.history.push(st.price);
-                    if (st.history.length > 20) st.history.shift();
+                    let basePrice = name.includes("비트코인") ? 90000000 : (name.includes("이더리움") ? 4500000 : Math.floor(Math.random() * 300000) + 20000);
+                    initialMarketData[name] = {
+                        price: basePrice,
+                        history: Array(15).fill(basePrice)
+                    };
                 });
-                updateStockView();
+                await window.FB.setDoc(marketRef, initialMarketData);
+            }
+
+            // 실시간 리스너 연결 (누가 접속하든 파이어베이스 주가 변동을 실시간 수신)
+            window.FB.onSnapshot(marketRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    stocks = docSnap.data();
+                    updateStockView();
+                }
+            });
+
+            // 3초마다 주가를 변동시키고 파이어베이스에 업로드 (모든 사용자가 동일한 주가를 공유하도록 함)
+            // 브라우저 탭을 여러 개 띄워도 동기화되지만, 충돌을 방지하기 위해 로컬 호스트 기준 1명의 타이머가 작동하게 하거나 공용으로 갱신되게 처리합니다.
+            setInterval(async () => {
+                // 접속 중인 누구나 주가 변동을 계산해서 반영 (서버less 환경에서 동기화 유지)
+                const currentSnap = await window.FB.getDoc(marketRef);
+                if (!currentSnap.exists()) return;
+                let currentData = currentSnap.data();
+
+                let updated = false;
+                stockNames.forEach(name => {
+                    if (currentData[name]) {
+                        let st = currentData[name];
+                        let fluctuation = (Math.random() - 0.49) * (st.price * 0.03);
+                        st.price = Math.max(10, Math.floor(st.price + fluctuation));
+                        st.history.push(st.price);
+                        if (st.history.length > 20) st.history.shift();
+                        updated = true;
+                    }
+                });
+
+                if (updated) {
+                    await window.FB.setDoc(marketRef, currentData);
+                }
             }, 3000);
         }
 
         // --- Firebase 연동 회원 및 거래 로직 ---
         window.addEventListener('firebase-ready', () => {
+            initMarketSync();
             updateProfileUI();
             loadRankingData();
             loadBoardData();
@@ -399,6 +434,7 @@
             let qty = parseInt(document.getElementById('trade-amount').value);
             if (isNaN(qty) || qty <= 0) { alert('올바른 수량을 입력하세요.'); return; }
 
+            if (!stocks[currentSelectedStock]) { alert('시장 데이터를 불러오는 중입니다. 잠시 후 다시 시도하세요.'); return; }
             let price = stocks[currentSelectedStock].price;
             let totalCost = price * qty;
 
@@ -444,7 +480,7 @@
             }
 
             for (let [stock, qty] of Object.entries(u.portfolio)) {
-                if (qty > 0) {
+                if (qty > 0 && stocks[stock]) {
                     let div = document.createElement('div');
                     div.className = "flex justify-between border-b py-1 text-xs";
                     div.innerHTML = `<span><b>${stock}</b>: ${qty}주</span><span>평가액: ${(qty * stocks[stock].price).toLocaleString()}원</span>`;
@@ -501,7 +537,6 @@
             document.getElementById('wallet-cash').innerText = u.cash.toLocaleString() + " 원";
             document.getElementById('my-wallet-address').innerText = u.walletAddress;
 
-            // 송금 내역 불러오기
             const q = window.FB.query(window.FB.collection(window.db, "transfers"), window.FB.orderBy("time", "desc"));
             const querySnapshot = await window.FB.getDocs(q);
             let historyContainer = document.getElementById('transfer-history');
@@ -536,7 +571,6 @@
 
             if (sender.cash < amount) { alert('보낼 수 있는 현금이 부족합니다!'); return; }
 
-            // 받는 사람 찾기
             const querySnapshot = await window.FB.getDocs(window.FB.collection(window.db, "users"));
             let receiverId = null;
             let receiverRef = null;
@@ -554,7 +588,6 @@
             if (!receiverId) { alert('존재하지 않는 지갑 주소입니다.'); return; }
             if (receiverId === currentUser) { alert('자기 자신에게는 송금할 수 없습니다.'); return; }
 
-            // 트랜잭션 처리
             sender.cash -= amount;
             receiverData.cash += amount;
 
@@ -660,7 +693,6 @@
         // 초기 실행
         renderStockButtons();
         initChart();
-        startMarketEngine();
     </script>
 </body>
 </html>
