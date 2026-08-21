@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주식 & 코인 대전 시뮬레이터</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f3f4f6; max-width: 600px; margin: 0 auto; }
+        @media (min-width: 768px) {
+            body { max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-height: 100vh; }
+        }
+        .hide { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col h-screen justify-between select-none">
+
+    <!-- 상단 헤더 -->
+    <header class="bg-blue-600 text-white p-4 text-center font-bold text-lg shadow-md flex justify-between items-center">
+        <span>📈 주식 & 코인 시뮬레이터</span>
+        <span id="header-user" class="text-xs bg-blue-700 px-2 py-1 rounded">로그인 필요</span>
+    </header>
+
+    <!-- 메인 컨텐츠 영역 (탭별) -->
+    <main class="flex-1 overflow-y-auto p-4 pb-20">
+
+        <!-- 1. 주식 탭 -->
+        <section id="tab-stock" class="space-y-4">
+            <h2 class="text-xl font-bold text-gray-800">실시간 시장</h2>
+            <div class="flex gap-2 overflow-x-auto pb-2" id="stock-list-container">
+                <!-- 종목 버튼들이 동적으로 생성됨 -->
+            </div>
+
+            <!-- 선택된 종목 상세 및 차트 -->
+            <div class="bg-white p-4 rounded-xl shadow space-y-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 id="selected-stock-name" class="font-bold text-lg">삼성전자</h3>
+                        <p id="selected-stock-price" class="text-2xl font-black text-blue-600">0원</p>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="setChartType('line')" id="btn-line" class="px-3 py-1 text-xs bg-blue-600 text-white rounded">라인</button>
+                        <button onclick="setChartType('bar')" id="btn-bar" class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded">캔들(바)</button>
+                    </div>
+                </div>
+
+                <!-- 캔버스 차트 -->
+                <div class="relative h-48 w-full">
+                    <canvas id="stockChart"></canvas>
+                </div>
+
+                <!-- 매수/매도 컨트롤 -->
+                <div class="flex gap-2 pt-2">
+                    <input type="number" id="trade-amount" min="1" value="1" class="w-20 border p-2 rounded text-center">
+                    <button onclick="executeTrade('buy')" class="flex-1 bg-red-500 text-white font-bold py-2 rounded shadow hover:bg-red-600">즉시 매수</button>
+                    <button onclick="executeTrade('sell')" class="flex-1 bg-blue-500 text-white font-bold py-2 rounded shadow hover:bg-blue-600">즉시 매도</button>
+                </div>
+            </div>
+
+            <!-- 보유 주식 및 거래 내역 -->
+            <div class="bg-white p-4 rounded-xl shadow space-y-2">
+                <h4 class="font-bold text-gray-700">보유 종목 및 거래 내역</h4>
+                <div id="portfolio-list" class="text-sm space-y-1 text-gray-600">보유 중인 주식이 없습니다.</div>
+            </div>
+        </section>
+
+        <!-- 2. 랭킹 탭 -->
+        <section id="tab-ranking" class="space-y-4 hide">
+            <h2 class="text-xl font-bold text-gray-800">🏆 실시간 자산 랭킹</h2>
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 text-xs uppercase">
+                            <th class="p-3">순위</th>
+                            <th class="p-3">별명</th>
+                            <th class="p-3 text-right">총자산 (현금+주식)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-tbody" class="text-sm divide-y">
+                        <!-- 랭킹 리스트 -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. 게시판 탭 -->
+        <section id="tab-board" class="space-y-4 hide">
+            <h2 class="text-xl font-bold text-gray-800">💬 정보 공유 게시판</h2>
+            <div class="bg-white p-4 rounded-xl shadow space-y-3">
+                <input type="text" id="board-title" placeholder="제목을 입력하세요" class="w-full border p-2 rounded text-sm">
+                <textarea id="board-content" placeholder="내용을 입력하세요" class="w-full border p-2 rounded text-sm h-20 resize-none"></textarea>
+                <button onclick="createPost()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">글 작성하기</button>
+            </div>
+            <div id="post-list" class="space-y-3">
+                <!-- 게시글 리스트 -->
+            </div>
+        </section>
+
+        <!-- 4. 내 지갑 탭 -->
+        <section id="tab-wallet" class="space-y-4 hide">
+            <h2 class="text-xl font-bold text-gray-800">💰 내 지갑 & 송금</h2>
+            <div class="bg-white p-4 rounded-xl shadow space-y-3">
+                <p class="text-gray-500 text-sm">사용 가능 현금 (주식 포함X)</p>
+                <p id="wallet-cash" class="text-3xl font-black text-gray-800">0 원</p>
+                <div class="bg-gray-50 p-3 rounded border text-xs break-all">
+                    <span class="font-bold text-gray-600">내 지갑 주소:</span> <span id="my-wallet-address" class="text-blue-600 font-mono">-</span>
+                </div>
+            </div>
+
+            <!-- 송금 박스 -->
+            <div class="bg-white p-4 rounded-xl shadow space-y-3">
+                <h3 class="font-bold text-gray-700 text-sm">지갑 이체 (송금)</h3>
+                <input type="text" id="transfer-address" placeholder="받는 사람 지갑 주소 입력" class="w-full border p-2 rounded text-sm font-mono">
+                <input type="number" id="transfer-amount" placeholder="보낼 금액 (원)" min="1" class="w-full border p-2 rounded text-sm">
+                <button onclick="sendMoney()" class="w-full bg-emerald-600 text-white py-2 rounded font-bold">송금하기</button>
+            </div>
+
+            <!-- 입출금 내역 -->
+            <div class="bg-white p-4 rounded-xl shadow space-y-2">
+                <h4 class="font-bold text-gray-700 text-sm">최근 이체/입금 내역</h4>
+                <div id="transfer-history" class="text-xs space-y-1 text-gray-500">내역이 없습니다.</div>
+            </div>
+        </section>
+
+        <!-- 5. 프로필 탭 -->
+        <section id="tab-profile" class="space-y-4 hide">
+            <h2 class="text-xl font-bold text-gray-800">👤 프로필 & 계정</h2>
+            <div id="profile-logged-out" class="bg-white p-4 rounded-xl shadow space-y-3">
+                <h3 class="font-bold text-gray-700">로그인 / 회원가입</h3>
+                <input type="text" id="auth-id" placeholder="아이디" class="w-full border p-2 rounded text-sm">
+                <input type="text" id="auth-nickname" placeholder="다른 사람들에게 보일 별명" class="w-full border p-2 rounded text-sm">
+                <input type="password" id="auth-pw" placeholder="비밀번호" class="w-full border p-2 rounded text-sm">
+                <input type="password" id="auth-pw-confirm" placeholder="비밀번호 확인" class="w-full border p-2 rounded text-sm">
+                <div class="flex gap-2">
+                    <button onclick="handleLogin()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold">로그인</button>
+                    <button onclick="handleRegister()" class="flex-1 bg-gray-700 text-white py-2 rounded font-bold">회원가입</button>
+                </div>
+            </div>
+            <div id="profile-logged-in" class="bg-white p-4 rounded-xl shadow space-y-3 hide">
+                <h3 class="font-bold text-lg text-blue-600"><span id="profile-name"></span> 님 환영합니다!</h3>
+                <p class="text-sm text-gray-600">아이디: <span id="profile-id-text"></span></p>
+                <button onclick="handleLogout()" class="w-full bg-red-500 text-white py-2 rounded font-bold">로그아웃</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 하단 네비게이션 탭 바 -->
+    <nav class="bg-white border-t flex justify-around py-2 fixed bottom-0 left-0 right-0 max-w-[600px] mx-auto z-10 shadow-lg">
+        <button onclick="switchTab('stock')" class="flex flex-col items-center text-blue-600 flex-1 py-1" id="nav-stock">
+            <i class="fa-solid fa-chart-line text-lg"></i>
+            <span class="text-xs mt-1">주식</span>
+        </button>
+        <button onclick="switchTab('ranking')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-ranking">
+            <i class="fa-solid fa-trophy text-lg"></i>
+            <span class="text-xs mt-1">랭킹</span>
+        </button>
+        <button onclick="switchTab('board')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-board">
+            <i class="fa-solid fa-comments text-lg"></i>
+            <span class="text-xs mt-1">게시판</span>
+        </button>
+        <button onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-wallet">
+            <i class="fa-solid fa-wallet text-lg"></i>
+            <span class="text-xs mt-1">내지갑</span>
+        </button>
+        <button onclick="switchTab('profile')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-profile">
+            <i class="fa-solid fa-user text-lg"></i>
+            <span class="text-xs mt-1">프로필</span>
+        </button>
+    </nav>
+
+    <!-- Firebase SDK 초기화 스크립트 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, onSnapshot, query, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyClcubLz_bCWiAhi_PaIxE_PWOYhbsaBjg",
+            authDomain: "stook-aeda3.firebaseapp.com",
+            projectId: "stook-aeda3",
+            storageBucket: "stook-aeda3.firebasestorage.app",
+            messagingSenderId: "949045637031",
+            appId: "1:949045637031:web:9d4561e6482070287f5082",
+            measurementId: "G-X7JPD7LWGD"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.FB = { collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, onSnapshot, query, orderBy, addDoc };
+        
+        window.dispatchEvent(new Event('firebase-ready'));
+    </script>
+
+    <!-- 앱 핵심 비즈니스 로직 -->
+    <script>
+        const stockNames = [
+            "삼성전자", "SK하이닉스", "LG에너지솔루션", "현대차", "POSCO홀딩스", 
+            "NAVER", "카카오", "셀트리온", "애플", "테슬라", "마이크로소프트", 
+            "아마존", "엔비디아", "알파벳", "메타 플랫폼스", "넷플릭스", 
+            "비트코인", "이더리움", "리플", "솔라나", "에이다", "도지코인", "체인링크"
+        ];
+
+        let stocks = {};
+        let currentSelectedStock = stockNames[0];
+        let chartType = 'line';
+        let stockChart = null;
+        let currentUser = localStorage.getItem('sim_current_user') || null;
+
+        // 종목별 초기 가격 및 히스토리 세팅
+        stockNames.forEach(name => {
+            let basePrice = name.includes("비트코인") ? 90000000 : (name.includes("이더리움") ? 4500000 : Math.floor(Math.random() * 300000) + 20000);
+            let history = [];
+            let current = basePrice;
+            for(let i=0; i<15; i++) {
+                let change = (Math.random() - 0.48) * (basePrice * 0.02);
+                current = Math.max(100, Math.floor(current + change));
+                history.push(current);
+            }
+            stocks[name] = { price: current, history: history };
+        });
+
+        // 탭 전환 함수
+        function switchTab(tabId) {
+            ['stock', 'ranking', 'board', 'wallet', 'profile'].forEach(id => {
+                document.getElementById(`tab-${id}`).classList.add('hide');
+                document.getElementById(`nav-${id}`).className = "flex flex-col items-center text-gray-400 flex-1 py-1";
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hide');
+            document.getElementById(`nav-${tabId}`).className = "flex flex-col items-center text-blue-600 flex-1 py-1";
+
+            if (tabId === 'ranking') loadRankingData();
+            if (tabId === 'board') loadBoardData();
+            if (tabId === 'wallet') updateWalletUI();
+        }
+
+        // 주식 버튼 렌더링
+        function renderStockButtons() {
+            const container = document.getElementById('stock-list-container');
+            container.innerHTML = '';
+            stockNames.forEach(name => {
+                let btn = document.createElement('button');
+                btn.className = `px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap shadow-sm transition ${currentSelectedStock === name ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border'}`;
+                btn.innerText = name;
+                btn.onclick = () => {
+                    currentSelectedStock = name;
+                    renderStockButtons();
+                    updateStockView();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // 차트 초기화
+        function initChart() {
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            stockChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(15).fill(''),
+                    datasets: [{
+                        label: '주가 추이',
+                        data: stocks[currentSelectedStock].history,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { grid: { display: false } }, x: { display: false } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function setChartType(type) {
+            chartType = type;
+            document.getElementById('btn-line').className = type === 'line' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
+            document.getElementById('btn-bar').className = type === 'bar' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
+            stockChart.config.type = type === 'bar' ? 'bar' : 'line';
+            stockChart.update();
+        }
+
+        function updateStockView() {
+            document.getElementById('selected-stock-name').innerText = currentSelectedStock;
+            let currentPrice = stocks[currentSelectedStock].price;
+            document.getElementById('selected-stock-price').innerText = currentPrice.toLocaleString() + " 원";
+            stockChart.data.datasets[0].data = stocks[currentSelectedStock].history;
+            stockChart.update();
+            loadUserPortfolio();
+        }
+
+        function startMarketEngine() {
+            setInterval(() => {
+                stockNames.forEach(name => {
+                    let st = stocks[name];
+                    let fluctuation = (Math.random() - 0.49) * (st.price * 0.03);
+                    st.price = Math.max(10, Math.floor(st.price + fluctuation));
+                    st.history.push(st.price);
+                    if (st.history.length > 20) st.history.shift();
+                });
+                updateStockView();
+            }, 3000);
+        }
+
+        // --- Firebase 연동 회원 및 거래 로직 ---
+        window.addEventListener('firebase-ready', () => {
+            updateProfileUI();
+            loadRankingData();
+            loadBoardData();
+        });
+
+        async function handleRegister() {
+            let id = document.getElementById('auth-id').value.trim();
+            let nick = document.getElementById('auth-nickname').value.trim();
+            let pw = document.getElementById('auth-pw').value;
+            let pwConfirm = document.getElementById('auth-pw-confirm').value;
+
+            if (!id || !nick || !pw) { alert('모든 항목을 입력해주세요.'); return; }
+            if (pw !== pwConfirm) { alert('비밀번호가 일치하지 않습니다.'); return; }
+
+            const userRef = window.FB.doc(window.db, "users", id);
+            const userSnap = await window.FB.getDoc(userRef);
+            if (userSnap.exists()) { alert('이미 존재하는 아이디입니다.'); return; }
+
+            let newUser = {
+                id: id,
+                nickname: nick,
+                password: pw,
+                cash: 10000000,
+                walletAddress: '0x' + Math.random().toString(16).substring(2, 12),
+                portfolio: {}
+            };
+
+            await window.FB.setDoc(userRef, newUser);
+            alert('회원가입 성공! 로그인해주세요.');
+        }
+
+        async function handleLogin() {
+            let id = document.getElementById('auth-id').value.trim();
+            let pw = document.getElementById('auth-pw').value;
+
+            const userRef = window.FB.doc(window.db, "users", id);
+            const userSnap = await window.FB.getDoc(userRef);
+
+            if (!userSnap.exists() || userSnap.data().password !== pw) {
+                alert('아이디 또는 비밀번호가 틀렸습니다.');
+                return;
+            }
+
+            currentUser = id;
+            localStorage.setItem('sim_current_user', id);
+            updateProfileUI();
+            alert(`${userSnap.data().nickname}님 환영합니다!`);
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('sim_current_user');
+            updateProfileUI();
+        }
+
+        async function updateProfileUI() {
+            if (!currentUser) {
+                document.getElementById('profile-logged-out').classList.remove('hide');
+                document.getElementById('profile-logged-in').classList.add('hide');
+                document.getElementById('header-user').innerText = "로그인 필요";
+                loadUserPortfolio();
+                return;
+            }
+
+            const userRef = window.FB.doc(window.db, "users", currentUser);
+            const userSnap = await window.FB.getDoc(userRef);
+            if (userSnap.exists()) {
+                let u = userSnap.data();
+                document.getElementById('profile-logged-out').classList.add('hide');
+                document.getElementById('profile-logged-in').classList.remove('hide');
+                document.getElementById('profile-name').innerText = u.nickname;
+                document.getElementById('profile-id-text').innerText = currentUser;
+                document.getElementById('header-user').innerText = u.nickname;
+            }
+            loadUserPortfolio();
+            updateWalletUI();
+        }
+
+        // 매수/매도
+        async function executeTrade(type) {
+            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
+            let qty = parseInt(document.getElementById('trade-amount').value);
+            if (isNaN(qty) || qty <= 0) { alert('올바른 수량을 입력하세요.'); return; }
+
+            let price = stocks[currentSelectedStock].price;
+            let totalCost = price * qty;
+
+            const userRef = window.FB.doc(window.db, "users", currentUser);
+            const userSnap = await window.FB.getDoc(userRef);
+            let u = userSnap.data();
+
+            if (!u.portfolio) u.portfolio = {};
+
+            if (type === 'buy') {
+                if (u.cash < totalCost) { alert('현금이 부족합니다!'); return; }
+                u.cash -= totalCost;
+                u.portfolio[currentSelectedStock] = (u.portfolio[currentSelectedStock] || 0) + qty;
+                alert(`${currentSelectedStock} ${qty}주 매수 완료!`);
+            } else {
+                if (!u.portfolio[currentSelectedStock] || u.portfolio[currentSelectedStock] < qty) {
+                    alert('보유 중인 수량이 부족합니다!'); return;
+                }
+                u.portfolio[currentSelectedStock] -= qty;
+                u.cash += totalCost;
+                alert(`${currentSelectedStock} ${qty}주 매도 완료!`);
+            }
+
+            await window.FB.updateDoc(userRef, { cash: u.cash, portfolio: u.portfolio });
+            updateStockView();
+            updateWalletUI();
+        }
+
+        async function loadUserPortfolio() {
+            let container = document.getElementById('portfolio-list');
+            if (!currentUser) { container.innerText = "로그인 후 확인 가능합니다."; return; }
+
+            const userRef = window.FB.doc(window.db, "users", currentUser);
+            const userSnap = await window.FB.getDoc(userRef);
+            if (!userSnap.exists()) return;
+
+            let u = userSnap.data();
+            container.innerHTML = '';
+
+            if (!u.portfolio || Object.keys(u.portfolio).length === 0) {
+                container.innerText = "보유 중인 주식이 없습니다.";
+                return;
+            }
+
+            for (let [stock, qty] of Object.entries(u.portfolio)) {
+                if (qty > 0) {
+                    let div = document.createElement('div');
+                    div.className = "flex justify-between border-b py-1 text-xs";
+                    div.innerHTML = `<span><b>${stock}</b>: ${qty}주</span><span>평가액: ${(qty * stocks[stock].price).toLocaleString()}원</span>`;
+                    container.appendChild(div);
+                }
+            }
+        }
+
+        // 랭킹 시스템
+        async function loadRankingData() {
+            let tbody = document.getElementById('ranking-tbody');
+            tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400">불러오는 중...</td></tr>';
+
+            const querySnapshot = await window.FB.getDocs(window.FB.collection(window.db, "users"));
+            let rankList = [];
+
+            querySnapshot.forEach((doc) => {
+                let u = doc.data();
+                let totalAsset = u.cash;
+                if (u.portfolio) {
+                    for (let [stName, qty] of Object.entries(u.portfolio)) {
+                        totalAsset += qty * (stocks[stName] ? stocks[stName].price : 0);
+                    }
+                }
+                rankList.push({ nickname: u.nickname, asset: totalAsset });
+            });
+
+            rankList.sort((a, b) => b.asset - a.asset);
+            tbody.innerHTML = '';
+
+            rankList.forEach((r, idx) => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `<td class="p-3 font-bold">${idx + 1}위</td><td class="p-3">${r.nickname}</td><td class="p-3 text-right font-bold text-blue-600">${r.asset.toLocaleString()} 원</td>`;
+                tbody.appendChild(tr);
+            });
+
+            if (rankList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-400">등록된 유저가 없습니다.</td></tr>`;
+            }
+        }
+
+        // 지갑 및 송금
+        async function updateWalletUI() {
+            if (!currentUser) {
+                document.getElementById('wallet-cash').innerText = "로그인 필요";
+                document.getElementById('my-wallet-address').innerText = "-";
+                return;
+            }
+            const userRef = window.FB.doc(window.db, "users", currentUser);
+            const userSnap = await window.FB.getDoc(userRef);
+            if (!userSnap.exists()) return;
+
+            let u = userSnap.data();
+            document.getElementById('wallet-cash').innerText = u.cash.toLocaleString() + " 원";
+            document.getElementById('my-wallet-address').innerText = u.walletAddress;
+
+            // 송금 내역 불러오기
+            const q = window.FB.query(window.FB.collection(window.db, "transfers"), window.FB.orderBy("time", "desc"));
+            const querySnapshot = await window.FB.getDocs(q);
+            let historyContainer = document.getElementById('transfer-history');
+            historyContainer.innerHTML = '';
+            let count = 0;
+
+            querySnapshot.forEach((doc) => {
+                let t = doc.data();
+                if (t.from === u.walletAddress || t.to === u.walletAddress) {
+                    count++;
+                    let isSend = t.from === u.walletAddress;
+                    let div = document.createElement('div');
+                    div.className = `p-1 rounded ${isSend ? 'text-red-500' : 'text-blue-500'}`;
+                    div.innerText = isSend ? `[송금] ${t.amount.toLocaleString()}원 보냄` : `[입금] ${t.amount.toLocaleString()}원 받음`;
+                    historyContainer.appendChild(div);
+                }
+            });
+
+            if (count === 0) historyContainer.innerText = "내역이 없습니다.";
+        }
+
+        async function sendMoney() {
+            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
+            let targetAddr = document.getElementById('transfer-address').value.trim();
+            let amount = parseInt(document.getElementById('transfer-amount').value);
+
+            if (isNaN(amount) || amount <= 0) { alert('올바른 금액을 입력하세요.'); return; }
+
+            const senderRef = window.FB.doc(window.db, "users", currentUser);
+            const senderSnap = await window.FB.getDoc(senderRef);
+            let sender = senderSnap.data();
+
+            if (sender.cash < amount) { alert('보낼 수 있는 현금이 부족합니다!'); return; }
+
+            // 받는 사람 찾기
+            const querySnapshot = await window.FB.getDocs(window.FB.collection(window.db, "users"));
+            let receiverId = null;
+            let receiverRef = null;
+            let receiverData = null;
+
+            querySnapshot.forEach((docSnap) => {
+                let data = docSnap.data();
+                if (data.walletAddress === targetAddr) {
+                    receiverId = docSnap.id;
+                    receiverRef = window.FB.doc(window.db, "users", receiverId);
+                    receiverData = data;
+                }
+            });
+
+            if (!receiverId) { alert('존재하지 않는 지갑 주소입니다.'); return; }
+            if (receiverId === currentUser) { alert('자기 자신에게는 송금할 수 없습니다.'); return; }
+
+            // 트랜잭션 처리
+            sender.cash -= amount;
+            receiverData.cash += amount;
+
+            await window.FB.updateDoc(senderRef, { cash: sender.cash });
+            await window.FB.updateDoc(receiverRef, { cash: receiverData.cash });
+
+            await window.FB.addDoc(window.FB.collection(window.db, "transfers"), {
+                from: sender.walletAddress,
+                to: targetAddr,
+                amount: amount,
+                time: Date.now()
+            });
+
+            alert('송금이 완료되었습니다!');
+            document.getElementById('transfer-address').value = '';
+            document.getElementById('transfer-amount').value = '';
+            updateWalletUI();
+        }
+
+        // 게시판 기능
+        async function createPost() {
+            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
+            let title = document.getElementById('board-title').value.trim();
+            let content = document.getElementById('board-content').value.trim();
+            if (!title || !content) { alert('제목과 내용을 입력해주세요.'); return; }
+
+            const userRef = window.FB.doc(window.db, "users", currentUser);
+            const userSnap = await window.FB.getDoc(userRef);
+
+            await window.FB.addDoc(window.FB.collection(window.db, "posts"), {
+                author: userSnap.data().nickname,
+                title: title,
+                content: content,
+                likes: 0,
+                comments: [],
+                time: Date.now()
+            });
+
+            document.getElementById('board-title').value = '';
+            document.getElementById('board-content').value = '';
+            loadBoardData();
+        }
+
+        async function loadBoardData() {
+            const q = window.FB.query(window.FB.collection(window.db, "posts"), window.FB.orderBy("time", "desc"));
+            const querySnapshot = await window.FB.getDocs(q);
+            let container = document.getElementById('post-list');
+            container.innerHTML = '';
+
+            querySnapshot.forEach((docSnap) => {
+                let p = docSnap.data();
+                let pId = docSnap.id;
+
+                let card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-xl shadow space-y-2 text-sm";
+                card.innerHTML = `
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>작성자: <b>${p.author}</b></span>
+                        <button onclick="likePost('${pId}', ${p.likes})" class="text-red-500"><i class="fa-solid fa-heart"></i> 좋아요 (${p.likes})</button>
+                    </div>
+                    <h3 class="font-bold text-base text-gray-800">${p.title}</h3>
+                    <p class="text-gray-600">${p.content}</p>
+                    <div class="border-t pt-2 space-y-1">
+                        <div class="text-xs font-bold text-gray-500">댓글</div>
+                        <div class="space-y-1">
+                            ${(p.comments || []).map(c => `<div class="bg-gray-50 p-1 rounded text-xs"><b>${c.author}:</b> ${c.text}</div>`).join('')}
+                        </div>
+                        <div class="flex gap-1 mt-1">
+                            <input type="text" id="comment-input-${pId}" placeholder="댓글을 입력하세요" class="flex-1 border p-1 rounded text-xs">
+                            <button onclick="addComment('${pId}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs">등록</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function likePost(postId, currentLikes) {
+            const postRef = window.FB.doc(window.db, "posts", postId);
+            await window.FB.updateDoc(postRef, { likes: currentLikes + 1 });
+            loadBoardData();
+        }
+
+        async function addComment(postId) {
+            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
+            let input = document.getElementById(`comment-input-${postId}`);
+            let text = input.value.trim();
+            if (!text) return;
+
+            const userRef = window.FB.doc(window.db, "users", currentUser);
+            const userSnap = await window.FB.getDoc(userRef);
+            
+            const postRef = window.FB.doc(window.db, "posts", postId);
+            const postSnap = await window.FB.getDoc(postRef);
+            let p = postSnap.data();
+            let comments = p.comments || [];
+
+            comments.push({ author: userSnap.data().nickname, text: text });
+            await window.FB.updateDoc(postRef, { comments: comments });
+            loadBoardData();
+        }
+
+        // 초기 실행
+        renderStockButtons();
+        initChart();
+        startMarketEngine();
+    </script>
+</body>
+</html>
