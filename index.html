@@ -44,8 +44,8 @@
                         <p id="selected-stock-price" class="text-2xl font-black text-blue-600">0원</p>
                     </div>
                     <div class="flex gap-1">
-                        <button onclick="setChartType('line')" id="btn-line" class="px-3 py-1 text-xs bg-blue-600 text-white rounded">라인</button>
-                        <button onclick="setChartType('bar')" id="btn-bar" class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded">캔들(바)</button>
+                        <button onclick="setChartType('line')" id="btn-line" class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded">라인</button>
+                        <button onclick="setChartType('candle')" id="btn-candle" class="px-3 py-1 text-xs bg-blue-600 text-white rounded">캔들차트</button>
                     </div>
                 </div>
 
@@ -209,17 +209,15 @@
 
         let stocks = {};
         let currentSelectedStock = stockNames[0];
-        let chartType = 'line';
+        let chartType = 'candle'; // 기본값을 캔들차트로 설정
         let stockChart = null;
         let currentUser = localStorage.getItem('sim_current_user') || null;
 
-        // 기본 뼈대 세팅 (실시간 데이터 로드 전 임시값)
         stockNames.forEach(name => {
             let basePrice = name.includes("비트코인") ? 90000000 : (name.includes("이더리움") ? 4500000 : 50000);
             stocks[name] = { price: basePrice, history: Array(15).fill(basePrice) };
         });
 
-        // 탭 전환 함수
         function switchTab(tabId) {
             ['stock', 'ranking', 'board', 'wallet', 'profile'].forEach(id => {
                 document.getElementById(`tab-${id}`).classList.add('hide');
@@ -233,7 +231,6 @@
             if (tabId === 'wallet') updateWalletUI();
         }
 
-        // 주식 버튼 렌더링
         function renderStockButtons() {
             const container = document.getElementById('stock-list-container');
             container.innerHTML = '';
@@ -250,75 +247,128 @@
             });
         }
 
-        // 차트 초기화 (상승/하락에 따른 색상 자동 분기 기능 포함)
+        // 진짜 캔들차트 모양(심지 + 몸통)을 그려주는 커스텀 차트 플러그인
+        const candleStickPlugin = {
+            id: 'candleStickPlugin',
+            afterDraw(chart) {
+                if (chart.config.type !== 'bar') return;
+                const ctx = chart.ctx;
+                const dataset = chart.data.datasets[0];
+                const meta = chart.getDatasetMeta(0);
+
+                if (!meta.data) return;
+
+                meta.data.forEach((bar, index) => {
+                    let raw = dataset.rawCandles ? dataset.rawCandles[index] : null;
+                    if (!raw) return;
+
+                    let { open, close, high, low } = raw;
+                    let isUp = close >= open;
+                    let color = isUp ? '#ef4444' : '#3b82f6'; // 상승 빨강, 하락 파랑
+
+                    let x = bar.x;
+                    let yHigh = chart.scales.y.getPixelForValue(high);
+                    let yLow = chart.scales.y.getPixelForValue(low);
+                    let yOpen = chart.scales.y.getPixelForValue(open);
+                    let yClose = chart.scales.y.getPixelForValue(close);
+
+                    ctx.save();
+                    ctx.strokeStyle = color;
+                    ctx.fillStyle = color;
+                    ctx.lineWidth = 1.5;
+
+                    // 1. 위아래 꼬리(심지) 그리기 (High ~ Low)
+                    ctx.beginPath();
+                    ctx.moveTo(x, yHigh);
+                    ctx.lineTo(x, yLow);
+                    ctx.stroke();
+
+                    // 2. 몸통(시가 ~ 종가) 그리기
+                    let topBody = Math.min(yOpen, yClose);
+                    let heightBody = Math.max(Math.abs(yOpen - yClose), 2); // 최소 두께 보장
+                    let widthBody = Math.max(bar.width * 0.7, 3);
+
+                    ctx.fillRect(x - widthBody / 2, topBody, widthBody, heightBody);
+                    ctx.restore();
+                });
+            }
+        };
+
         function initChart() {
             const ctx = document.getElementById('stockChart').getContext('2d');
             stockChart = new Chart(ctx, {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: Array(20).fill(''),
                     datasets: [{
-                        label: '주가 추이',
-                        data: stocks[currentSelectedStock].history,
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.1,
-                        fill: true,
-                        // 바 모드일 때 이전 값과 비교하여 상승(빨강)/하락(파랑) 색상 적용
-                        backgroundColor: function(context) {
-                            if (chartType !== 'bar') return 'rgba(37, 99, 235, 0.1)';
-                            const index = context.dataIndex;
-                            if (index === 0) return 'rgba(239, 68, 68, 0.8)';
-                            const current = context.dataset.data[index];
-                            const prev = context.dataset.data[index - 1];
-                            return current >= prev ? 'rgba(239, 68, 68, 0.8)' : 'rgba(59, 130, 246, 0.8)';
-                        },
-                        borderColor: function(context) {
-                            if (chartType !== 'bar') return '#2563eb';
-                            const index = context.dataIndex;
-                            if (index === 0) return '#ef4444';
-                            const current = context.dataset.data[index];
-                            const prev = context.dataset.data[index - 1];
-                            return current >= prev ? '#ef4444' : '#3b82f6';
-                        }
+                        label: '캔들차트',
+                        data: [],
+                        backgroundColor: 'transparent',
+                        borderColor: 'transparent'
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: false, // 갱신 시 전체 화면이 깜빡이거나 왜곡되는 현상 방지
+                    animation: false,
                     scales: { 
                         y: { grid: { display: false } }, 
                         x: { display: false } 
                     },
                     plugins: { legend: { display: false } }
-                }
+                },
+                plugins: [candleStickPlugin]
             });
         }
 
         function setChartType(type) {
             chartType = type;
             document.getElementById('btn-line').className = type === 'line' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
-            document.getElementById('btn-bar').className = type === 'bar' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
-            stockChart.config.type = type === 'bar' ? 'bar' : 'line';
-            stockChart.update();
+            document.getElementById('btn-candle').className = type === 'candle' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
+            updateStockView();
         }
 
         function updateStockView() {
             document.getElementById('selected-stock-name').innerText = currentSelectedStock;
             if (stocks[currentSelectedStock]) {
-                let currentPrice = stocks[currentSelectedStock].price;
-                document.getElementById('selected-stock-price').innerText = currentPrice.toLocaleString() + " 원";
+                let st = stocks[currentSelectedStock];
+                document.getElementById('selected-stock-price',).innerText = st.price.toLocaleString() + " 원";
                 
-                // 기존 차트 데이터 유지하며 오른쪽으로 데이터가 추가되도록 업데이트
-                stockChart.data.datasets[0].data = [...stocks[currentSelectedStock].history];
+                let history = st.history || [st.price];
+
+                if (chartType === 'line') {
+                    stockChart.config.type = 'line';
+                    stockChart.data.datasets[0].data = [...history];
+                    stockChart.data.datasets[0].borderColor = '#2563eb';
+                    stockChart.data.datasets[0].backgroundColor = 'rgba(37, 99, 235, 0.1)';
+                    stockChart.data.datasets[0].borderWidth = 2;
+                    stockChart.data.datasets[0].fill = true;
+                } else {
+                    // 캔들 모드일 때 시가/종가/고가/저가 데이터 생성
+                    stockChart.config.type = 'bar';
+                    let candleData = [];
+                    let rawCandles = [];
+
+                    for (let i = 0; i < history.length; i++) {
+                        let close = history[i];
+                        let open = i === 0 ? close * (1 + (Math.random() - 0.5) * 0.01) : history[i - 1];
+                        let high = Math.max(open, close) * (1 + Math.random() * 0.008);
+                        let low = Math.min(open, close) * (1 - Math.random() * 0.008);
+
+                        candleData.push(high); // Y축 범위 설정을 위해 고가 사용
+                        rawCandles.push({ open, close, high, low });
+                    }
+
+                    stockChart.data.datasets[0].data = candleData;
+                    stockChart.data.datasets[0].rawCandles = rawCandles;
+                    stockChart.data.datasets[0].backgroundColor = 'transparent';
+                    stockChart.data.datasets[0].borderColor = 'transparent';
+                }
                 stockChart.update('none');
             }
             loadUserPortfolio();
         }
 
-        // --- Firebase 실시간 주가 동기화 및 엔진 ---
         async function initMarketSync() {
             const marketRef = window.FB.doc(window.db, "market", "prices");
             const marketSnap = await window.FB.getDoc(marketRef);
@@ -354,10 +404,7 @@
                         let fluctuation = (Math.random() - 0.49) * (st.price * 0.03);
                         st.price = Math.max(10, Math.floor(st.price + fluctuation));
                         
-                        // 히스토리가 없거나 배열이 아닐 경우 초기화
                         if (!Array.isArray(st.history)) st.history = [];
-                        
-                        // 새로운 가격을 오른쪽에 추가하고 왼쪽 끝을 밀어내는 방식 (기존 데이터 유지)
                         st.history.push(st.price);
                         if (st.history.length > 25) {
                             st.history.shift();
@@ -372,7 +419,6 @@
             }, 3000);
         }
 
-        // --- 사용자 IP 가져오기 함수 ---
         async function getClientIP() {
             try {
                 let res = await fetch('https://api.ipify.org?format=json');
@@ -383,7 +429,6 @@
             }
         }
 
-        // --- Firebase 연동 회원 및 거래 로직 ---
         window.addEventListener('firebase-ready', () => {
             initMarketSync();
             updateProfileUI();
@@ -405,7 +450,6 @@
             if (userSnap.exists()) { alert('이미 존재하는 아이디입니다.'); return; }
 
             let clientIp = await getClientIP();
-
             const querySnapshot = await window.FB.getDocs(window.FB.collection(window.db, "users"));
             let nickExists = false;
             let ipExists = false;
@@ -423,7 +467,7 @@
                 id: id,
                 nickname: nick,
                 password: pw,
-                cash: 5000000, // 초기자금 500만 원
+                cash: 1000000,
                 walletAddress: '0x' + Math.random().toString(16).substring(2, 12),
                 ip: clientIp,
                 portfolio: {}
@@ -480,7 +524,6 @@
             updateWalletUI();
         }
 
-        // 매수/매도
         async function executeTrade(type) {
             if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
             let qty = parseInt(document.getElementById('trade-amount').value);
@@ -541,7 +584,6 @@
             }
         }
 
-        // 랭킹 시스템
         async function loadRankingData() {
             let tbody = document.getElementById('ranking-tbody');
             tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400">불러오는 중...</td></tr>';
@@ -574,7 +616,6 @@
             }
         }
 
-        // 지갑 및 송금
         async function updateWalletUI() {
             if (!currentUser) {
                 document.getElementById('wallet-cash').innerText = "로그인 필요";
@@ -659,7 +700,6 @@
             updateWalletUI();
         }
 
-        // 게시판 기능
         async function createPost() {
             if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
             let title = document.getElementById('board-title').value.trim();
@@ -742,7 +782,6 @@
             loadBoardData();
         }
 
-        // 초기 실행
         renderStockButtons();
         initChart();
     </script>
