@@ -6,8 +6,6 @@
     <title>주식 & 코인 대전</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js 본체 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- FontAwesome 아이콘 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -47,9 +45,9 @@
                     </div>
                 </div>
 
-                <!-- 캔버스 차트 -->
-                <div class="relative h-48 w-full">
-                    <canvas id="stockChart"></canvas>
+                <!-- 순수 Canvas 차트 영역 -->
+                <div class="relative h-48 w-full bg-gray-50 rounded border overflow-hidden">
+                    <canvas id="stockCanvas" class="w-full h-full"></canvas>
                 </div>
 
                 <!-- 매수/매도 컨트롤 -->
@@ -193,8 +191,7 @@
 
         let stocks = {};
         let currentSelectedStock = stockNames[0];
-        let chartType = 'candle'; // 기본값을 캔들차트로 설정
-        let stockChart = null;
+        let chartType = 'candle'; 
         let currentUser = localStorage.getItem('sim_current_user') || null;
 
         stockNames.forEach(name => {
@@ -213,6 +210,7 @@
             if (tabId === 'ranking') loadRankingData();
             if (tabId === 'board') loadBoardData();
             if (tabId === 'wallet') updateWalletUI();
+            if (tabId === 'stock') setTimeout(updateStockView, 50);
         }
 
         function renderStockButtons() {
@@ -231,80 +229,6 @@
             });
         }
 
-        // 위아래 꼬리가 달린 진짜 캔들 모양을 그려주는 커스텀 플러그인
-        const candleStickPlugin = {
-            id: 'candleStickPlugin',
-            afterDraw(chart) {
-                if (chart.config.type !== 'bar') return;
-                const ctx = chart.ctx;
-                const dataset = chart.data.datasets[0];
-                const meta = chart.getDatasetMeta(0);
-
-                if (!meta.data) return;
-
-                meta.data.forEach((bar, index) => {
-                    let raw = dataset.rawCandles ? dataset.rawCandles[index] : null;
-                    if (!raw) return;
-
-                    let { open, close, high, low } = raw;
-                    let isUp = close >= open;
-                    let color = isUp ? '#ef4444' : '#3b82f6'; // 상승 빨강, 하락 파랑
-
-                    let x = bar.x;
-                    let yHigh = chart.scales.y.getPixelForValue(high);
-                    let yLow = chart.scales.y.getPixelForValue(low);
-                    let yOpen = chart.scales.y.getPixelForValue(open);
-                    let yClose = chart.scales.y.getPixelForValue(close);
-
-                    ctx.save();
-                    ctx.strokeStyle = color;
-                    ctx.fillStyle = color;
-                    ctx.lineWidth = 1.5;
-
-                    // 1. 위아래 꼬리(심지)
-                    ctx.beginPath();
-                    ctx.moveTo(x, yHigh);
-                    ctx.lineTo(x, yLow);
-                    ctx.stroke();
-
-                    // 2. 몸통
-                    let topBody = Math.min(yOpen, yClose);
-                    let heightBody = Math.max(Math.abs(yOpen - yClose), 2);
-                    let widthBody = Math.max(bar.width * 0.7, 3);
-
-                    ctx.fillRect(x - widthBody / 2, topBody, widthBody, heightBody);
-                    ctx.restore();
-                });
-            }
-        };
-
-        function initChart() {
-            const ctx = document.getElementById('stockChart').getContext('2d');
-            stockChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: Array(20).fill(''),
-                    datasets: [{
-                        label: '차트',
-                        data: [],
-                        backgroundColor: 'transparent',
-                        borderColor: 'transparent'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: false,
-                    scales: { 
-                        y: { grid: { display: false } }, 
-                        x: { display: false } 
-                    },
-                    plugins: { legend: { display: false } }
-                },
-                plugins: [candleStickPlugin]
-            });
-        }
-
         function setChartType(type) {
             chartType = type;
             document.getElementById('btn-line').className = type === 'line' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
@@ -312,42 +236,84 @@
             updateStockView();
         }
 
+        // 순수 자바스크립트 Canvas 렌더링 엔진 (오류 없이 100% 그려짐)
+        function drawCustomChart() {
+            const canvas = document.getElementById('stockCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            // 실제 픽셀 크기 설정
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let st = stocks[currentSelectedStock];
+            if (!st || !st.history || st.history.length === 0) return;
+            let history = st.history;
+
+            let minVal = Math.min(...history);
+            let maxVal = Math.max(...history);
+            if (minVal === maxVal) { minVal -= 1; maxVal += 1; }
+            let padding = (maxVal - minVal) * 0.1;
+            minVal -= padding;
+            maxVal += padding;
+
+            let getX = (i) => (i / (Math.max(history.length - 1, 1))) * (canvas.width - 40) + 20;
+            let getY = (val) => canvas.height - 20 - ((val - minVal) / (maxVal - minVal)) * (canvas.height - 40);
+
+            if (chartType === 'line') {
+                ctx.beginPath();
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < history.length; i++) {
+                    let x = getX(i);
+                    let y = getY(history[i]);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            } else {
+                let barWidth = Math.max((canvas.width / history.length) * 0.6, 3);
+                for (let i = 0; i < history.length; i++) {
+                    let close = history[i];
+                    let open = i === 0 ? close : history[i - 1];
+                    let high = Math.max(open, close) * (1 + Math.random() * 0.003);
+                    let low = Math.min(open, close) * (1 - Math.random() * 0.003);
+
+                    let x = getX(i);
+                    let yHigh = getY(high);
+                    let yLow = getY(low);
+                    let yOpen = getY(open);
+                    let yClose = getY(close);
+
+                    let isUp = close >= open;
+                    let color = isUp ? '#ef4444' : '#3b82f6';
+
+                    ctx.strokeStyle = color;
+                    ctx.fillStyle = color;
+                    ctx.lineWidth = 1.5;
+
+                    // 꼬리
+                    ctx.beginPath();
+                    ctx.moveTo(x, yHigh);
+                    ctx.lineTo(x, yLow);
+                    ctx.stroke();
+
+                    // 몸통
+                    let topBody = Math.min(yOpen, yClose);
+                    let bodyHeight = Math.max(Math.abs(yOpen - yClose), 2);
+                    ctx.fillRect(x - barWidth / 2, topBody, barWidth, bodyHeight);
+                }
+            }
+        }
+
         function updateStockView() {
             document.getElementById('selected-stock-name').innerText = currentSelectedStock;
             if (stocks[currentSelectedStock]) {
                 let st = stocks[currentSelectedStock];
                 document.getElementById('selected-stock-price').innerText = st.price.toLocaleString() + " 원";
-                
-                let history = st.history || [st.price];
-
-                if (chartType === 'line') {
-                    stockChart.config.type = 'line';
-                    stockChart.data.datasets[0].data = [...history];
-                    stockChart.data.datasets[0].borderColor = '#2563eb';
-                    stockChart.data.datasets[0].backgroundColor = 'rgba(37, 99, 235, 0.1)';
-                    stockChart.data.datasets[0].borderWidth = 2;
-                    stockChart.data.datasets[0].fill = true;
-                } else {
-                    stockChart.config.type = 'bar';
-                    let candleData = [];
-                    let rawCandles = [];
-
-                    for (let i = 0; i < history.length; i++) {
-                        let close = history[i];
-                        let open = i === 0 ? close * (1 + (Math.random() - 0.5) * 0.01) : history[i - 1];
-                        let high = Math.max(open, close) * (1 + Math.random() * 0.008);
-                        let low = Math.min(open, close) * (1 - Math.random() * 0.008);
-
-                        candleData.push(high);
-                        rawCandles.push({ open, close, high, low });
-                    }
-
-                    stockChart.data.datasets[0].data = candleData;
-                    stockChart.data.datasets[0].rawCandles = rawCandles;
-                    stockChart.data.datasets[0].backgroundColor = 'transparent';
-                    stockChart.data.datasets[0].borderColor = 'transparent';
-                }
-                stockChart.update('none');
+                drawCustomChart();
             }
             loadUserPortfolio();
         }
@@ -766,7 +732,8 @@
         }
 
         renderStockButtons();
-        initChart();
+        setTimeout(updateStockView, 100);
+        window.addEventListener('resize', updateStockView);
     </script>
 </body>
 </html>
