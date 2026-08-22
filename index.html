@@ -6,8 +6,12 @@
     <title>주식 & 코인 대전</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN -->
+    
+    <!-- Chart.js 및 캔들차트 플러그인 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
+
     <!-- FontAwesome 아이콘 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -26,15 +30,13 @@
         <span id="header-user" class="text-xs bg-blue-700 px-2 py-1 rounded">로그인 필요</span>
     </header>
 
-    <!-- 메인 컨텐츠 영역 (탭별) -->
+    <!-- 메인 컨텐츠 영역 -->
     <main class="flex-1 overflow-y-auto p-4 pb-20">
 
         <!-- 1. 주식 탭 -->
         <section id="tab-stock" class="space-y-4">
             <h2 class="text-xl font-bold text-gray-800">실시간 시장 대전 (동기화됨)</h2>
-            <div class="flex gap-2 overflow-x-auto pb-2" id="stock-list-container">
-                <!-- 종목 버튼들이 동적으로 생성됨 -->
-            </div>
+            <div class="flex gap-2 overflow-x-auto pb-2" id="stock-list-container"></div>
 
             <!-- 선택된 종목 상세 및 차트 -->
             <div class="bg-white p-4 rounded-xl shadow space-y-3">
@@ -45,7 +47,7 @@
                     </div>
                     <div class="flex gap-1">
                         <button onclick="setChartType('line')" id="btn-line" class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded">라인</button>
-                        <button onclick="setChartType('candle')" id="btn-candle" class="px-3 py-1 text-xs bg-blue-600 text-white rounded">캔들차트</button>
+                        <button onclick="setChartType('candlestick')" id="btn-candle" class="px-3 py-1 text-xs bg-blue-600 text-white rounded">캔들차트</button>
                     </div>
                 </div>
 
@@ -81,9 +83,7 @@
                             <th class="p-3 text-right">총자산 (현금+주식)</th>
                         </tr>
                     </thead>
-                    <tbody id="ranking-tbody" class="text-sm divide-y">
-                        <!-- 랭킹 리스트 -->
-                    </tbody>
+                    <tbody id="ranking-tbody" class="text-sm divide-y"></tbody>
                 </table>
             </div>
         </section>
@@ -96,31 +96,25 @@
                 <textarea id="board-content" placeholder="내용을 입력하세요" class="w-full border p-2 rounded text-sm h-20 resize-none"></textarea>
                 <button onclick="createPost()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">글 작성하기</button>
             </div>
-            <div id="post-list" class="space-y-3">
-                <!-- 게시글 리스트 -->
-            </div>
+            <div id="post-list" class="space-y-3"></div>
         </section>
 
         <!-- 4. 내 지갑 탭 -->
         <section id="tab-wallet" class="space-y-4 hide">
             <h2 class="text-xl font-bold text-gray-800">💰 내 지갑 & 송금 대전</h2>
             <div class="bg-white p-4 rounded-xl shadow space-y-3">
-                <p class="text-gray-500 text-sm">사용 가능 현금 (주식 포함X)</p>
+                <p class="text-gray-500 text-sm">사용 가능 현금</p>
                 <p id="wallet-cash" class="text-3xl font-black text-gray-800">0 원</p>
                 <div class="bg-gray-50 p-3 rounded border text-xs break-all">
                     <span class="font-bold text-gray-600">내 지갑 주소:</span> <span id="my-wallet-address" class="text-blue-600 font-mono">-</span>
                 </div>
             </div>
-
-            <!-- 송금 박스 -->
             <div class="bg-white p-4 rounded-xl shadow space-y-3">
                 <h3 class="font-bold text-gray-700 text-sm">지갑 이체 (송금)</h3>
                 <input type="text" id="transfer-address" placeholder="받는 사람 지갑 주소 입력" class="w-full border p-2 rounded text-sm font-mono">
                 <input type="number" id="transfer-amount" placeholder="보낼 금액 (원)" min="1" class="w-full border p-2 rounded text-sm">
                 <button onclick="sendMoney()" class="w-full bg-emerald-600 text-white py-2 rounded font-bold">송금하기</button>
             </div>
-
-            <!-- 입출금 내역 -->
             <div class="bg-white p-4 rounded-xl shadow space-y-2">
                 <h4 class="font-bold text-gray-700 text-sm">최근 이체/입금 내역</h4>
                 <div id="transfer-history" class="text-xs space-y-1 text-gray-500">내역이 없습니다.</div>
@@ -153,24 +147,19 @@
     <!-- 하단 네비게이션 탭 바 -->
     <nav class="bg-white border-t flex justify-around py-2 fixed bottom-0 left-0 right-0 max-w-[600px] mx-auto z-10 shadow-lg">
         <button onclick="switchTab('stock')" class="flex flex-col items-center text-blue-600 flex-1 py-1" id="nav-stock">
-            <i class="fa-solid fa-chart-line text-lg"></i>
-            <span class="text-xs mt-1">주식</span>
+            <i class="fa-solid fa-chart-line text-lg"></i><span class="text-xs mt-1">주식</span>
         </button>
         <button onclick="switchTab('ranking')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-ranking">
-            <i class="fa-solid fa-trophy text-lg"></i>
-            <span class="text-xs mt-1">랭킹</span>
+            <i class="fa-solid fa-trophy text-lg"></i><span class="text-xs mt-1">랭킹</span>
         </button>
         <button onclick="switchTab('board')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-board">
-            <i class="fa-solid fa-comments text-lg"></i>
-            <span class="text-xs mt-1">게시판</span>
+            <i class="fa-solid fa-comments text-lg"></i><span class="text-xs mt-1">게시판</span>
         </button>
         <button onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-wallet">
-            <i class="fa-solid fa-wallet text-lg"></i>
-            <span class="text-xs mt-1">내지갑</span>
+            <i class="fa-solid fa-wallet text-lg"></i><span class="text-xs mt-1">내지갑</span>
         </button>
         <button onclick="switchTab('profile')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-profile">
-            <i class="fa-solid fa-user text-lg"></i>
-            <span class="text-xs mt-1">프로필</span>
+            <i class="fa-solid fa-user text-lg"></i><span class="text-xs mt-1">프로필</span>
         </button>
     </nav>
 
@@ -194,7 +183,6 @@
 
         window.db = db;
         window.FB = { collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, onSnapshot, query, orderBy, addDoc };
-        
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
 
@@ -209,7 +197,7 @@
 
         let stocks = {};
         let currentSelectedStock = stockNames[0];
-        let chartType = 'candle'; // 기본값을 캔들차트로 설정
+        let chartType = 'candlestick'; // 기본값을 플러그인 캔들차트로 설정
         let stockChart = null;
         let currentUser = localStorage.getItem('sim_current_user') || null;
 
@@ -247,64 +235,14 @@
             });
         }
 
-        // 진짜 캔들차트 모양(심지 + 몸통)을 그려주는 커스텀 차트 플러그인
-        const candleStickPlugin = {
-            id: 'candleStickPlugin',
-            afterDraw(chart) {
-                if (chart.config.type !== 'bar') return;
-                const ctx = chart.ctx;
-                const dataset = chart.data.datasets[0];
-                const meta = chart.getDatasetMeta(0);
-
-                if (!meta.data) return;
-
-                meta.data.forEach((bar, index) => {
-                    let raw = dataset.rawCandles ? dataset.rawCandles[index] : null;
-                    if (!raw) return;
-
-                    let { open, close, high, low } = raw;
-                    let isUp = close >= open;
-                    let color = isUp ? '#ef4444' : '#3b82f6'; // 상승 빨강, 하락 파랑
-
-                    let x = bar.x;
-                    let yHigh = chart.scales.y.getPixelForValue(high);
-                    let yLow = chart.scales.y.getPixelForValue(low);
-                    let yOpen = chart.scales.y.getPixelForValue(open);
-                    let yClose = chart.scales.y.getPixelForValue(close);
-
-                    ctx.save();
-                    ctx.strokeStyle = color;
-                    ctx.fillStyle = color;
-                    ctx.lineWidth = 1.5;
-
-                    // 1. 위아래 꼬리(심지) 그리기 (High ~ Low)
-                    ctx.beginPath();
-                    ctx.moveTo(x, yHigh);
-                    ctx.lineTo(x, yLow);
-                    ctx.stroke();
-
-                    // 2. 몸통(시가 ~ 종가) 그리기
-                    let topBody = Math.min(yOpen, yClose);
-                    let heightBody = Math.max(Math.abs(yOpen - yClose), 2); // 최소 두께 보장
-                    let widthBody = Math.max(bar.width * 0.7, 3);
-
-                    ctx.fillRect(x - widthBody / 2, topBody, widthBody, heightBody);
-                    ctx.restore();
-                });
-            }
-        };
-
         function initChart() {
             const ctx = document.getElementById('stockChart').getContext('2d');
             stockChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'candlestick', // 플러그인에서 제공하는 정석 캔들 타입
                 data: {
-                    labels: Array(20).fill(''),
                     datasets: [{
                         label: '캔들차트',
-                        data: [],
-                        backgroundColor: 'transparent',
-                        borderColor: 'transparent'
+                        data: []
                     }]
                 },
                 options: {
@@ -312,19 +250,20 @@
                     maintainAspectRatio: false,
                     animation: false,
                     scales: { 
-                        y: { grid: { display: false } }, 
-                        x: { display: false } 
+                        x: { type: 'timeseries', display: false }
                     },
                     plugins: { legend: { display: false } }
-                },
-                plugins: [candleStickPlugin]
+                }
             });
         }
 
         function setChartType(type) {
             chartType = type;
             document.getElementById('btn-line').className = type === 'line' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
-            document.getElementById('btn-candle').className = type === 'candle' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
+            document.getElementById('btn-candle').className = type === 'candlestick' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
+            
+            // 차트 타입 실시간 변경 반영
+            stockChart.config.type = type;
             updateStockView();
         }
 
@@ -332,37 +271,34 @@
             document.getElementById('selected-stock-name').innerText = currentSelectedStock;
             if (stocks[currentSelectedStock]) {
                 let st = stocks[currentSelectedStock];
-                document.getElementById('selected-stock-price',).innerText = st.price.toLocaleString() + " 원";
+                document.getElementById('selected-stock-price').innerText = st.price.toLocaleString() + " 원";
                 
                 let history = st.history || [st.price];
+                let nowTime = Date.now();
 
                 if (chartType === 'line') {
-                    stockChart.config.type = 'line';
-                    stockChart.data.datasets[0].data = [...history];
-                    stockChart.data.datasets[0].borderColor = '#2563eb';
-                    stockChart.data.datasets[0].backgroundColor = 'rgba(37, 99, 235, 0.1)';
-                    stockChart.data.datasets[0].borderWidth = 2;
-                    stockChart.data.datasets[0].fill = true;
+                    stockChart.data.datasets[0].data = history.map((val, idx) => ({
+                        x: nowTime - (history.length - idx) * 3000,
+                        y: val
+                    }));
                 } else {
-                    // 캔들 모드일 때 시가/종가/고가/저가 데이터 생성
-                    stockChart.config.type = 'bar';
+                    // 플러그인용 OHLC 데이터 포맷 매핑
                     let candleData = [];
-                    let rawCandles = [];
-
                     for (let i = 0; i < history.length; i++) {
                         let close = history[i];
                         let open = i === 0 ? close * (1 + (Math.random() - 0.5) * 0.01) : history[i - 1];
                         let high = Math.max(open, close) * (1 + Math.random() * 0.008);
                         let low = Math.min(open, close) * (1 - Math.random() * 0.008);
 
-                        candleData.push(high); // Y축 범위 설정을 위해 고가 사용
-                        rawCandles.push({ open, close, high, low });
+                        candleData.push({
+                            x: nowTime - (history.length - i) * 3000,
+                            o: open,
+                            h: high,
+                            l: low,
+                            c: close
+                        });
                     }
-
                     stockChart.data.datasets[0].data = candleData;
-                    stockChart.data.datasets[0].rawCandles = rawCandles;
-                    stockChart.data.datasets[0].backgroundColor = 'transparent';
-                    stockChart.data.datasets[0].borderColor = 'transparent';
                 }
                 stockChart.update('none');
             }
