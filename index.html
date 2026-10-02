@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>STOCK & COIN ARENA | 주식 & 코인 대전</title>
   
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome Icons CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Lightweight Charts v4.1.1 -->
+  <!-- Lightweight Charts v4.1.1 CDN -->
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
   <style>
@@ -45,7 +45,6 @@
   <!-- Mobile App Container -->
   <div class="w-full max-w-[600px] min-h-screen bg-slate-950 flex flex-col border-x border-slate-900 shadow-2xl relative pb-24">
 
-    <!-- Header Bar -->
     <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-md">
       <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('market')">
         <div class="bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
@@ -74,11 +73,11 @@
     <section class="bg-slate-900/80 border-b border-slate-800/80 px-4 py-2.5 flex items-center justify-between text-xs">
       <div class="flex items-center space-x-1">
         <span class="text-slate-400">보유 현금:</span>
-        <span id="header-cash" class="font-bold text-emerald-400">10,000,000 KRW</span>
+        <span id="header-cash" class="font-bold text-emerald-400">1,000,000 KRW</span>
       </div>
       <div class="flex items-center space-x-1">
         <span class="text-slate-400">총 평가:</span>
-        <span id="header-total-asset" class="font-extrabold text-blue-400">10,000,000 KRW</span>
+        <span id="header-total-asset" class="font-extrabold text-blue-400">1,000,000 KRW</span>
       </div>
     </section>
 
@@ -88,8 +87,8 @@
         <button onclick="switchTab('market')" id="tab-btn-market" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-blue-500 text-blue-400 whitespace-nowrap flex items-center justify-center space-x-1">
           <i class="fa-solid fa-chart-line"></i><span>거래소</span>
         </button>
-        <button onclick="switchTab('portfolio')" id="tab-btn-portfolio" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center justify-center space-x-1">
-          <i class="fa-solid fa-wallet"></i><span>내 지갑</span>
+        <button onclick="switchTab('news')" id="tab-btn-news" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center justify-center space-x-1">
+          <i class="fa-solid fa-newspaper"></i><span>실시간 뉴스</span>
         </button>
         <button onclick="switchTab('rank')" id="tab-btn-rank" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center justify-center space-x-1">
           <i class="fa-solid fa-trophy"></i><span>자산 랭킹</span>
@@ -97,8 +96,8 @@
         <button onclick="switchTab('community')" id="tab-btn-community" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center justify-center space-x-1">
           <i class="fa-solid fa-comments"></i><span>게시판</span>
         </button>
-        <button onclick="switchTab('news')" id="tab-btn-news" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center justify-center space-x-1">
-          <i class="fa-solid fa-newspaper"></i><span>실시간 뉴스</span>
+        <button onclick="switchTab('portfolio')" id="tab-btn-portfolio" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center justify-center space-x-1">
+          <i class="fa-solid fa-wallet"></i><span>내 지갑</span>
         </button>
         <button onclick="switchTab('profile')" id="tab-btn-profile" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center justify-center space-x-1">
           <i class="fa-solid fa-user"></i><span>프로필</span>
@@ -109,7 +108,6 @@
       </div>
     </nav>
 
-    <!-- Main Content Area -->
     <main class="p-3 sm:p-4 space-y-4 flex-1">
 
       <!-- TAB 1: MARKET EXCHANGE VIEW -->
@@ -119,9 +117,9 @@
         <div class="bg-slate-900 p-2.5 rounded-2xl border border-slate-800 space-y-2.5 shadow-sm">
           <div class="flex items-center justify-between gap-1 overflow-x-auto pb-1 text-xs no-scrollbar">
             <button onclick="filterCategory('ALL')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-blue-600 text-white whitespace-nowrap">전체</button>
-            <button onclick="filterCategory('DOMESTIC')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">국내 🇰🇷</button>
-            <button onclick="filterCategory('OVERSEAS')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">해외 🇺🇸</button>
-            <button onclick="filterCategory('CRYPTO')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">코인 🪙</button>
+            <button onclick="filterCategory('DOMESTIC')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">국내주식 🇰🇷</button>
+            <button onclick="filterCategory('OVERSEAS')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">해외주식 🇺🇸</button>
+            <button onclick="filterCategory('CRYPTO')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">가상화폐 🪙</button>
           </div>
           <div class="relative">
             <input type="text" id="search-input" onkeyup="renderStockList()" placeholder="한글 종목명 검색 (예: 삼성전자, 비트코인)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 transition">
@@ -159,7 +157,7 @@
             <div class="bg-slate-950/80 p-3 rounded-xl border border-rose-900/40 space-y-2">
               <div class="flex justify-between items-center text-[11px]">
                 <span class="font-extrabold text-rose-400"><i class="fa-solid fa-circle-plus mr-1"></i>매수</span>
-                <span class="text-slate-400"><b id="buy-available-cash" class="text-white">10M</b> KRW</span>
+                <span class="text-slate-400"><b id="buy-available-cash" class="text-white">1M</b> KRW</span>
               </div>
               <div>
                 <input type="number" id="buy-qty" value="1" min="1" oninput="calculateBuyTotal()" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white text-right focus:outline-none focus:border-rose-500">
@@ -196,7 +194,7 @@
         <!-- Stock List Grid Container -->
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-3 space-y-2">
           <div class="flex items-center justify-between px-2 py-1 text-[11px] text-slate-400 font-bold border-b border-slate-800">
-            <span>종목명 (한글) / 구분</span>
+            <span>한글 종목명 / 구분</span>
             <div class="space-x-4">
               <span>현재가</span>
               <span>변동률</span>
@@ -208,18 +206,66 @@
 
       </section>
 
-      <!-- TAB 2: PORTFOLIO & WALLET TRANSFER VIEW -->
+      <!-- TAB 2: NEWS VIEW -->
+      <section id="tab-news" class="tab-content hidden space-y-4">
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center">
+            <i class="fa-solid fa-bolt text-amber-400 mr-2"></i>실시간 뉴스 및 속보 피드
+          </h3>
+          <p class="text-[11px] text-slate-400">시장에 영향을 미치는 주요 공시 및 뉴스 정보입니다.</p>
+          <div id="news-timeline-container" class="space-y-3">
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: RANKINGS VIEW -->
+      <section id="tab-rank" class="tab-content hidden space-y-4">
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center">
+                <i class="fa-solid fa-trophy text-amber-400 mr-2"></i>실시간 트레이더 자산 랭킹
+              </h3>
+              <p class="text-[11px] text-slate-400">Firestore 등록 참여자들의 실시간 총자산 순위입니다.</p>
+            </div>
+            <button onclick="fetchFirestoreRankings()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-lg">
+              <i class="fa-solid fa-rotate-right mr-1"></i>새로고침
+            </button>
+          </div>
+          <div class="space-y-2" id="rank-list-container">
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: COMMUNITY BOARD VIEW -->
+      <section id="tab-community" class="tab-content hidden space-y-4">
+        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center">
+            <i class="fa-solid fa-pen-to-square text-indigo-400 mr-2"></i>커뮤니티 글쓰기
+          </h3>
+          <div class="space-y-2">
+            <input type="text" id="post-title" placeholder="글 제목" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+            <textarea id="post-content" rows="3" placeholder="종목 분석 및 투자 의견을 나눠보세요!" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"></textarea>
+          </div>
+          <button onclick="addCommunityPost()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition">게시물 등록</button>
+        </div>
+
+        <div class="space-y-3" id="community-posts-container">
+        </div>
+      </section>
+
+      <!-- TAB 5: PORTFOLIO & WALLET VIEW -->
       <section id="tab-portfolio" class="tab-content hidden space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-1">
             <span class="text-[11px] text-slate-400 font-semibold">총 보유 자산</span>
-            <h3 id="pf-total-asset" class="text-lg font-black text-white">10,000,000 KRW</h3>
+            <h3 id="pf-total-asset" class="text-lg font-black text-white">1,000,000 KRW</h3>
             <p id="pf-profit-rate" class="text-[11px] font-bold text-slate-400">수익률 0.00%</p>
           </div>
           <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-1">
             <span class="text-[11px] text-slate-400 font-semibold">보유 현금</span>
-            <h3 id="pf-cash" class="text-lg font-black text-emerald-400">10,000,000 KRW</h3>
-            <button onclick="resetAccount()" class="text-[10px] text-slate-500 hover:text-slate-300 underline">자산 초기화 (1천만원)</button>
+            <h3 id="pf-cash" class="text-lg font-black text-emerald-400">1,000,000 KRW</h3>
+            <button onclick="resetAccount()" class="text-[10px] text-slate-500 hover:text-slate-300 underline">자산 초기화 (100만원)</button>
           </div>
         </div>
 
@@ -257,71 +303,58 @@
         </div>
       </section>
 
-      <!-- TAB 3: RANKINGS VIEW -->
-      <section id="tab-rank" class="tab-content hidden space-y-4">
-        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <div>
-              <h3 class="text-sm font-bold text-white flex items-center">
-                <i class="fa-solid fa-trophy text-amber-400 mr-2"></i>실시간 트레이더 자산 랭킹
-              </h3>
-              <p class="text-[11px] text-slate-400">참여자들의 실시간 총자산 순위입니다.</p>
-            </div>
-          </div>
-          <div class="space-y-2" id="rank-list-container">
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 4: COMMUNITY BOARD VIEW -->
-      <section id="tab-community" class="tab-content hidden space-y-4">
-        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center">
-            <i class="fa-solid fa-pen-to-square text-indigo-400 mr-2"></i>커뮤니티 글쓰기
-          </h3>
-          <div class="space-y-2">
-            <input type="text" id="post-title" placeholder="글 제목" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500">
-            <textarea id="post-content" rows="3" placeholder="종목 분석 및 투자 의견을 나눠보세요!" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500"></textarea>
-          </div>
-          <button onclick="addCommunityPost()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition">게시물 등록</button>
-        </div>
-
-        <div class="space-y-3" id="community-posts-container">
-        </div>
-      </section>
-
-      <!-- TAB 5: BREAKING NEWS VIEW -->
-      <section id="tab-news" class="tab-content hidden space-y-4">
-        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
-          <h3 class="text-sm font-bold text-white flex items-center">
-            <i class="fa-solid fa-bolt text-amber-400 mr-2"></i>실시간 속보 및 시장 뉴스
-          </h3>
-          <p class="text-[11px] text-slate-400">관리자 발행 및 시장 변동 실시간 기사가 기록됩니다.</p>
-          <div id="news-timeline-container" class="space-y-3">
-          </div>
-        </div>
-      </section>
-
       <!-- TAB 6: PROFILE / AUTH VIEW -->
       <section id="tab-profile" class="tab-content hidden space-y-4">
-        <!-- Logged Out Container -->
-        <div id="profile-logged-out" class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div class="text-center space-y-1">
-            <div class="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center mx-auto text-xl">
-              <i class="fa-solid fa-user-lock"></i>
+        <!-- Logged Out Container: Dual Forms (Login / Signup) -->
+        <div id="profile-logged-out" class="space-y-4">
+          <!-- Login Form -->
+          <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
+            <div class="flex items-center space-x-2 border-b border-slate-800 pb-3">
+              <i class="fa-solid fa-right-to-bracket text-blue-500 text-lg"></i>
+              <h3 class="text-base font-bold text-white">로그인</h3>
             </div>
-            <h3 class="text-base font-bold text-white">로그인이 필요합니다</h3>
-            <p class="text-xs text-slate-400">계정을 생성하고 리그에 참여해보세요.</p>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">아이디</label>
+                <input type="text" id="login-id" placeholder="아이디 입력" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">비밀번호</label>
+                <input type="password" id="login-pw" placeholder="비밀번호 입력" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+              <button onclick="handleUserLogin()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+                로그인하기
+              </button>
+            </div>
           </div>
 
-          <div class="space-y-3 pt-2">
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">닉네임</label>
-              <input type="text" id="auth-nickname-input" placeholder="사용할 닉네임 입력" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-blue-500">
+          <!-- Register Form -->
+          <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
+            <div class="flex items-center space-x-2 border-b border-slate-800 pb-3">
+              <i class="fa-solid fa-user-plus text-emerald-400 text-lg"></i>
+              <h3 class="text-base font-bold text-white">회원가입</h3>
             </div>
-            <button onclick="handleUserLogin()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
-              로그인 / 회원가입 시작하기
-            </button>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">아이디 <span class="text-rose-500">*</span></label>
+                <input type="text" id="auth-id" placeholder="사용할 아이디" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">닉네임 <span class="text-rose-500">*</span></label>
+                <input type="text" id="auth-nickname" placeholder="리그에서 사용할 닉네임" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">비밀번호 <span class="text-rose-500">*</span></label>
+                <input type="password" id="auth-pw" placeholder="비밀번호" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">비밀번호 확인 <span class="text-rose-500">*</span></label>
+                <input type="password" id="auth-pw-confirm" placeholder="비밀번호 다시 입력" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+              </div>
+              <button onclick="handleUserRegister()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+                회원가입 신청
+              </button>
+            </div>
           </div>
         </div>
 
@@ -407,23 +440,26 @@
 
     </main>
 
-    <!-- Bottom Fixed Navigation Bar -->
     <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] bg-slate-900/95 border-t border-slate-800/80 backdrop-blur-md z-40 px-2 py-1.5 flex justify-around items-center text-[10px]">
       <button onclick="switchTab('market')" id="bnav-market" class="bnav-btn flex flex-col items-center p-1 text-blue-400">
         <i class="fa-solid fa-chart-line text-base mb-0.5"></i>
-        <span>거래소</span>
-      </button>
-      <button onclick="switchTab('portfolio')" id="bnav-portfolio" class="bnav-btn flex flex-col items-center p-1 text-slate-400">
-        <i class="fa-solid fa-wallet text-base mb-0.5"></i>
-        <span>지갑</span>
+        <span>주식</span>
       </button>
       <button onclick="switchTab('news')" id="bnav-news" class="bnav-btn flex flex-col items-center p-1 text-slate-400">
         <i class="fa-solid fa-bolt text-base mb-0.5"></i>
-        <span>실시간뉴스</span>
+        <span>뉴스</span>
       </button>
       <button onclick="switchTab('rank')" id="bnav-rank" class="bnav-btn flex flex-col items-center p-1 text-slate-400">
         <i class="fa-solid fa-trophy text-base mb-0.5"></i>
         <span>랭킹</span>
+      </button>
+      <button onclick="switchTab('community')" id="bnav-community" class="bnav-btn flex flex-col items-center p-1 text-slate-400">
+        <i class="fa-solid fa-comments text-base mb-0.5"></i>
+        <span>게시판</span>
+      </button>
+      <button onclick="switchTab('portfolio')" id="bnav-portfolio" class="bnav-btn flex flex-col items-center p-1 text-slate-400">
+        <i class="fa-solid fa-wallet text-base mb-0.5"></i>
+        <span>내지갑</span>
       </button>
       <button onclick="switchTab('profile')" id="bnav-profile" class="bnav-btn flex flex-col items-center p-1 text-slate-400">
         <i class="fa-solid fa-user text-base mb-0.5"></i>
@@ -453,11 +489,10 @@
     </div>
   </div>
 
-  <!-- Firebase Modular Scripts Initializer -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, collection, addDoc, setDoc, getDoc, updateDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'stock-crypto-arena';
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -477,25 +512,17 @@
       window.firebaseDb = db;
       window.firebaseAppId = appId;
 
-      // Start initially in logged-out state
-      signOut(auth).catch(() => {});
+      // Rule 3: Auth First & mandatory anonymous login fallback
+      const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+      if (token) {
+        await signInWithCustomToken(auth, token).catch(() => signInAnonymously(auth));
+      } else {
+        await signInAnonymously(auth).catch((e) => console.log("Anonymous auth fallback:", e));
+      }
 
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          window.currentUserId = user.uid;
-          if (typeof window.onUserLoggedInUI === 'function') {
-            window.onUserLoggedInUI(user);
-          }
-          initFirebaseListeners();
-        } else {
-          window.currentUserId = null;
-          if (typeof window.onUserLoggedOutUI === 'function') {
-            window.onUserLoggedOutUI();
-          }
-        }
-      });
+      initFirebaseListeners();
     } catch(err) {
-      console.warn("Firebase initialization fallback:", err);
+      console.warn("Firebase initialization notice:", err);
     }
 
     function initFirebaseListeners() {
@@ -530,9 +557,84 @@
         }
       }, (error) => console.log("Posts snapshot error:", error));
     }
+
+    // Export functions to global scope for HTML event handlers
+    window.firestoreService = {
+      async registerUser(userData) {
+        if (!db) throw new Error("Database reference not available");
+        // Collection path according to mandatory Rule 1: public/data/users
+        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', userData.id);
+        const existingDoc = await getDoc(userDocRef);
+        if (existingDoc.exists()) {
+          throw new Error("EXISTS_ID");
+        }
+
+        // Check nickname duplicate across collection
+        const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+        const allUsersSnap = await getDocs(usersColRef);
+        let nickExists = false;
+        allUsersSnap.forEach(d => {
+          if (d.data().nickname === userData.nickname) nickExists = true;
+        });
+
+        if (nickExists) {
+          throw new Error("EXISTS_NICKNAME");
+        }
+
+        await setDoc(userDocRef, userData);
+        return true;
+      },
+
+      async loginUser(id, password) {
+        if (!db) throw new Error("Database reference not available");
+        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', id);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!userDoc.exists()) {
+          return null;
+        }
+        
+        const data = userDoc.data();
+        if (data.password !== password) {
+          return null;
+        }
+        return data;
+      },
+
+      async updateNickname(id, newNickname) {
+        if (!db) return;
+        const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+        const allUsersSnap = await getDocs(usersColRef);
+        let nickExists = false;
+        allUsersSnap.forEach(d => {
+          if (d.id !== id && d.data().nickname === newNickname) nickExists = true;
+        });
+
+        if (nickExists) {
+          throw new Error("EXISTS_NICKNAME");
+        }
+
+        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', id);
+        await updateDoc(userDocRef, { nickname: newNickname });
+      },
+
+      async updateUserWallet(id, cash, portfolio) {
+        if (!db || !id) return;
+        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', id);
+        await updateDoc(userDocRef, { cash, portfolio });
+      },
+
+      async getAllUsers() {
+        if (!db) return [];
+        const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+        const snap = await getDocs(usersColRef);
+        const list = [];
+        snap.forEach(d => list.push(d.data()));
+        return list;
+      }
+    };
   </script>
 
-  <!-- Main Application Logic Script -->
   <script>
     const ADMIN_PASS = "2783!!??wjdwogkr";
     let isAdminActive = false;
@@ -540,17 +642,16 @@
     let selectedStockName = '삼성전자'; 
     let chartType = 'candlestick';
 
-    let userNickname = null; // null = 비로그인 상태
+    // Completely starts in logged-out state on app load
+    let currentSessionUser = null; 
 
     let lwChart = null;
     let candlestickSeries = null;
     let lineSeries = null;
 
     let userWallet = {
-      cash: 10000000,
-      holdings: {
-        '삼성전자': { qty: 10, avgPrice: 72000 }
-      }
+      cash: 1000000,
+      holdings: {}
     };
 
     function generateHistoricalCandles(basePrice, count = 30) {
@@ -573,7 +674,7 @@
       return candles;
     }
 
-    // Fully Korean Stock & Crypto Instrument Registry
+    // Pure Korean instrument names registry (Strict requirement 3)
     let stocks = [
       // 국내 주식
       { name: '삼성전자', category: 'DOMESTIC', price: 74500, candles: generateHistoricalCandles(74500) },
@@ -594,7 +695,7 @@
       { name: '알파벳', category: 'OVERSEAS', price: 230000, candles: generateHistoricalCandles(230000) },
       { name: '팔란티어', category: 'OVERSEAS', price: 35000, candles: generateHistoricalCandles(35000) },
 
-      // 가상화폐 (한글 정식 풀네임 적용)
+      // 가상화폐 (영문 티커 전혀 사용 금지 - 오직 한글)
       { name: '비트코인', category: 'CRYPTO', price: 92000000, candles: generateHistoricalCandles(92000000) },
       { name: '이더리움', category: 'CRYPTO', price: 4800000, candles: generateHistoricalCandles(4800000) },
       { name: '솔라나', category: 'CRYPTO', price: 210000, candles: generateHistoricalCandles(210000) },
@@ -612,18 +713,12 @@
 
     window.dbCustomNews = [];
     let localNewsTimeline = [
-      { id: 'n1', title: '[개장 속보] 글로벌 증시 및 비트코인 유동성 확대', desc: '한국어 종목명 시스템 및 실시간 통신망이 가동되었습니다.', timeStr: '10분 전', impact: 'GOOD' }
+      { id: 'n1', title: '[개장 속보] 비트코인 및 국내 글로벌 통합 시세 가동', desc: '한글 종목 연동 및 실시간 리그가 가동되었습니다.', timeStr: '10분 전', impact: 'GOOD' }
     ];
 
     window.communityPosts = [
-      { id: 'p1', author: '버핏의제자', title: '비트코인 신고가 모멘텀 돌파 시도 중', content: '차트 흐름이 매우 견고합니다.', timeStr: '5분 전', likes: 14 },
-      { id: 'p2', author: '삼성전자존버', title: '삼성전자 반도체 감산 호재 기다리는 중', content: '속보 발행 시 상승 전환 기대!', timeStr: '12분 전', likes: 9 }
-    ];
-
-    let rankers = [
-      { name: '워렌버핏', asset: 154000000, profit: '+1,440.0%' },
-      { name: '서학개미대장', asset: 89000000, profit: '+790.0%' },
-      { name: '코인왕김떡상', asset: 45000000, profit: '+350.0%' }
+      { id: 'p1', author: '버핏의제자', title: '비트코인 모멘텀 지속 상승 예상', content: '차트 흐름이 매우 견고합니다.', timeStr: '5분 전', likes: 14 },
+      { id: 'p2', author: '삼성전자존버', title: '삼성전자 실적 호재 기다리는 중', content: '속보 발행 시 상승 전환 기대!', timeStr: '12분 전', likes: 9 }
     ];
 
     window.onload = function() {
@@ -633,7 +728,7 @@
       updateWalletUI();
       renderNewsTimeline();
       renderCommunityPosts();
-      renderRankings();
+      fetchFirestoreRankings();
       renderAdminStockSelector();
       startMarketSimulator();
       startAutoNewsScheduler();
@@ -722,6 +817,7 @@
       updateLightweightChartData();
     }
 
+    // Navigation Switcher for 6 Main Tabs
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(el => {
@@ -750,6 +846,7 @@
       }
 
       if(tabId === 'portfolio') renderPortfolioUI();
+      if(tabId === 'rank') fetchFirestoreRankings();
       if(tabId === 'market' && lwChart) {
         setTimeout(() => {
           const container = document.getElementById('lightweight_chart_container');
@@ -847,8 +944,8 @@
     }
 
     function executeTrade(type) {
-      if (!userNickname) {
-        showToast('⚠️ 먼저 프로필 탭에서 로그인/회원가입을 진행해 주세요.', 'BAD');
+      if (!currentSessionUser) {
+        showToast('⚠️ 먼저 프로필 탭에서 로그인 해주세요.', 'BAD');
         switchTab('profile');
         return;
       }
@@ -862,7 +959,7 @@
         const cost = stock.price * qty;
 
         if(userWallet.cash < cost) {
-          showToast('⚠️ 보유 현금이 부족합니다!', 'BAD');
+          showToast('⚠️️ 보유 현금이 부족합니다!', 'BAD');
           return;
         }
 
@@ -895,8 +992,15 @@
         showToast(`🎉 ${stock.name} ${qty}개 매도 완료! (+${proceed.toLocaleString()} KRW)`, 'GOOD');
       }
 
+      syncWalletToFirestore();
       updateWalletUI();
       updateSelectedStockUI();
+    }
+
+    function syncWalletToFirestore() {
+      if (currentSessionUser && window.firestoreService) {
+        window.firestoreService.updateUserWallet(currentSessionUser.id, userWallet.cash, userWallet.holdings).catch(() => {});
+      }
     }
 
     function updateWalletUI() {
@@ -947,8 +1051,8 @@
       });
 
       const totalAsset = userWallet.cash + totalStockVal;
-      const totalProfit = totalAsset - 10000000;
-      const totalRate = ((totalProfit / 10000000) * 100).toFixed(2);
+      const totalProfit = totalAsset - 1000000;
+      const totalRate = ((totalProfit / 1000000) * 100).toFixed(2);
 
       document.getElementById('pf-total-asset').innerText = `${totalAsset.toLocaleString()} KRW`;
       document.getElementById('pf-cash').innerText = `${userWallet.cash.toLocaleString()} KRW`;
@@ -959,8 +1063,8 @@
     }
 
     function executeMoneyTransfer() {
-      if (!userNickname) {
-        showToast('⚠️ 송금 기능을 이용하려면 먼저 로그인해주세요.', 'BAD');
+      if (!currentSessionUser) {
+        showToast('⚠️ 송금 기능을 이용하려면 로그인 해주세요.', 'BAD');
         switchTab('profile');
         return;
       }
@@ -973,6 +1077,7 @@
       if (userWallet.cash < amount) return alert('보유 현금이 부족합니다!');
 
       userWallet.cash -= amount;
+      syncWalletToFirestore();
       updateWalletUI();
       renderPortfolioUI();
 
@@ -983,74 +1088,149 @@
     }
 
     function resetAccount() {
-      userWallet = { cash: 10000000, holdings: {} };
+      userWallet = { cash: 1000000, holdings: {} };
+      syncWalletToFirestore();
       updateWalletUI();
       renderPortfolioUI();
-      showToast('🔄 자산이 1,000만원으로 초기화되었습니다.', 'GOOD');
+      showToast('🔄 자산이 100만원으로 초기화되었습니다.', 'GOOD');
     }
 
-    // User Authentication Methods
-    async function handleUserLogin() {
-      const inputName = document.getElementById('auth-nickname-input').value.trim();
-      if(!inputName) return alert('사용할 닉네임을 입력해주세요.');
+    async function handleUserRegister() {
+      const id = document.getElementById('auth-id').value.trim();
+      const nickname = document.getElementById('auth-nickname').value.trim();
+      const pw = document.getElementById('auth-pw').value;
+      const pwConfirm = document.getElementById('auth-pw-confirm').value;
 
-      userNickname = inputName;
+      // 1. Mandatory field checks
+      if (!id || !nickname || !pw || !pwConfirm) {
+        alert('모든 필수 항목(아이디, 닉네임, 비밀번호, 비밀번호 확인)을 입력해 주세요.');
+        return;
+      }
 
-      if(window.firebaseAuth) {
-        try {
-          const authMod = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-          await authMod.signInAnonymously(window.firebaseAuth);
-        } catch(e) {
-          console.log("Auth login notice:", e);
+      // 2. Password matching check
+      if (pw !== pwConfirm) {
+        alert('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+        return;
+      }
+
+      // Random wallet address generation for schema compliance
+      const walletAddress = '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
+
+      const newUserDoc = {
+        id: id,
+        nickname: nickname,
+        password: pw,
+        cash: 1000000,
+        walletAddress: walletAddress,
+        portfolio: {}
+      };
+
+      try {
+        await window.firestoreService.registerUser(newUserDoc);
+        alert("회원가입이 완료되었습니다! 가입하신 아이디와 비밀번호로 로그인해주세요.");
+
+        // Form field reset
+        document.getElementById('auth-id').value = '';
+        document.getElementById('auth-nickname').value = '';
+        document.getElementById('auth-pw').value = '';
+        document.getElementById('auth-pw-confirm').value = '';
+
+        // Auto focus on login id field
+        document.getElementById('login-id').focus();
+      } catch (err) {
+        if (err.message === "EXISTS_ID") {
+          alert("이미 존재하는 아이디입니다.");
+        } else if (err.message === "EXISTS_NICKNAME") {
+          alert("이미 사용 중인 닉네임입니다.");
+        } else {
+          alert("회원가입 처리 중 오류가 발생했습니다: " + err.message);
         }
       }
-
-      window.onUserLoggedInUI({ uid: window.currentUserId || 'user_' + Date.now() });
-      showToast(`🎉 환영합니다, ${userNickname} 트레이더님!`, 'GOOD');
     }
 
-    async function handleUserLogout() {
-      if(window.firebaseAuth) {
-        try {
-          const authMod = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
-          await authMod.signOut(window.firebaseAuth);
-        } catch(e) {}
+    async function handleUserLogin() {
+      const id = document.getElementById('login-id').value.trim();
+      const pw = document.getElementById('login-pw').value;
+
+      if (!id || !pw) {
+        alert('아이디와 비밀번호를 모두 입력해 주세요.');
+        return;
       }
-      userNickname = null;
-      window.onUserLoggedOutUI();
+
+      try {
+        const user = await window.firestoreService.loginUser(id, pw);
+        if (!user) {
+          alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+          return;
+        }
+
+        currentSessionUser = user;
+        userWallet.cash = user.cash || 1000000;
+        userWallet.holdings = user.portfolio || {};
+
+        alert("로그인 성공!");
+
+        // Clear login input fields
+        document.getElementById('login-id').value = '';
+        document.getElementById('login-pw').value = '';
+
+        updateProfileUI();
+        updateWalletUI();
+      } catch (err) {
+        alert("로그인 중 오류가 발생했습니다: " + err.message);
+      }
+    }
+
+    function handleUserLogout() {
+      currentSessionUser = null;
+      userWallet = { cash: 1000000, holdings: {} };
+
+      document.getElementById('profile-logged-out').classList.remove('hidden');
+      document.getElementById('profile-logged-in').classList.add('hidden');
+
+      updateWalletUI();
       showToast('👋 로그아웃 되었습니다.', 'GOOD');
     }
 
-    function updateUserNickname() {
+    async function updateUserNickname() {
+      if (!currentSessionUser) return;
+
       const newName = document.getElementById('edit-nickname-input').value.trim();
       if(!newName) return alert('새로운 닉네임을 입력해주세요.');
 
-      userNickname = newName;
-      document.getElementById('user-profile-nickname').innerText = userNickname;
-      document.getElementById('user-avatar-text').innerText = userNickname.substring(0,2);
-      document.getElementById('edit-nickname-input').value = '';
+      try {
+        await window.firestoreService.updateNickname(currentSessionUser.id, newName);
+        currentSessionUser.nickname = newName;
 
-      renderRankings();
-      showToast('✨ 닉네임이 성공적으로 변경되었습니다!', 'GOOD');
+        document.getElementById('user-profile-nickname').innerText = newName;
+        document.getElementById('user-avatar-text').innerText = newName.substring(0,2);
+        document.getElementById('edit-nickname-input').value = '';
+
+        fetchFirestoreRankings();
+        showToast('✨ 닉네임이 성공적으로 변경되었습니다!', 'GOOD');
+      } catch (err) {
+        if (err.message === "EXISTS_NICKNAME") {
+          alert("이미 사용 중인 닉네임입니다.");
+        } else {
+          alert("닉네임 변경 실패: " + err.message);
+        }
+      }
     }
 
-    window.onUserLoggedInUI = function(user) {
-      document.getElementById('profile-logged-out').classList.add('hidden');
-      document.getElementById('profile-logged-in').classList.remove('hidden');
+    function updateProfileUI() {
+      if (currentSessionUser) {
+        document.getElementById('profile-logged-out').classList.add('hidden');
+        document.getElementById('profile-logged-in').classList.remove('hidden');
 
-      const nick = userNickname || '익명 트레이더';
-      document.getElementById('user-profile-nickname').innerText = nick;
-      document.getElementById('user-avatar-text').innerText = nick.substring(0,2);
-      document.getElementById('user-profile-id').innerText = `ID: ${user ? user.uid : 'Guest'}`;
-
-      renderRankings();
-    };
-
-    window.onUserLoggedOutUI = function() {
-      document.getElementById('profile-logged-out').classList.remove('hidden');
-      document.getElementById('profile-logged-in').classList.add('hidden');
-      renderRankings();
-    };
+        const nick = currentSessionUser.nickname;
+        document.getElementById('user-profile-nickname').innerText = nick;
+        document.getElementById('user-avatar-text').innerText = nick.substring(0,2);
+        document.getElementById('user-profile-id').innerText = `ID: ${currentSessionUser.id}`;
+      } else {
+        document.getElementById('profile-logged-out').classList.remove('hidden');
+        document.getElementById('profile-logged-in').classList.add('hidden');
+      }
+    }
 
     function openAdminAuthModal() {
       if(isAdminActive) {
@@ -1249,7 +1429,7 @@
     }
 
     async function addCommunityPost() {
-      if (!userNickname) {
+      if (!currentSessionUser) {
         showToast('⚠️ 글 작성은 로그인 후 이용 가능합니다.', 'BAD');
         switchTab('profile');
         return;
@@ -1261,7 +1441,7 @@
       if(!title || !content) return alert('제목과 내용을 입력해 주세요.');
 
       const newPost = {
-        author: userNickname,
+        author: currentSessionUser.nickname,
         title: title,
         content: content,
         likes: 0,
@@ -1318,38 +1498,59 @@
       }
     }
 
-    function renderRankings() {
+    async function fetchFirestoreRankings() {
       const container = document.getElementById('rank-list-container');
-      container.innerHTML = '';
+      if (!container) return;
 
-      let activeRankers = [...rankers];
-      if (userNickname) {
-        const totalStockVal = Object.keys(userWallet.holdings).reduce((acc, name) => {
-          const h = userWallet.holdings[name];
-          const s = stocks.find(x => x.name === name);
-          return acc + (s ? s.price * h.qty : 0);
-        }, 0);
+      container.innerHTML = '<div class="text-center text-xs text-slate-500 py-4">랭킹 데이터 불러오는 중...</div>';
 
-        const myTotal = userWallet.cash + totalStockVal;
-        const myProfitRate = (((myTotal - 10000000) / 10000000) * 100).toFixed(2);
-        
-        activeRankers.push({
-          name: `${userNickname} (나)`,
-          asset: myTotal,
-          profit: `${myProfitRate >= 0 ? '+' : ''}${myProfitRate}%`
-        });
+      let userList = [];
+      if (window.firestoreService) {
+        try {
+          userList = await window.firestoreService.getAllUsers();
+        } catch(e) {
+          console.warn("Ranking fetch notice:", e);
+        }
       }
 
-      activeRankers.sort((a,b) => b.asset - a.asset);
+      // Default mock benchmark rankers if db is empty
+      if (userList.length === 0) {
+        userList = [
+          { nickname: '워렌버핏', cash: 50000000, portfolio: {} },
+          { nickname: '서학개미대장', cash: 25000000, portfolio: {} },
+          { nickname: '코인왕김떡상', cash: 12000000, portfolio: {} }
+        ];
+      }
 
-      activeRankers.forEach((r, i) => {
+      // Calculate total asset for each user based on real-time stock prices
+      const computedList = userList.map(u => {
+        let totalVal = u.cash || 0;
+        if (u.portfolio) {
+          Object.keys(u.portfolio).forEach(name => {
+            const h = u.portfolio[name];
+            const s = stocks.find(x => x.name === name);
+            if (s && h) totalVal += s.price * (h.qty || 0);
+          });
+        }
+        const profitRate = (((totalVal - 1000000) / 1000000) * 100).toFixed(2);
+        return {
+          nickname: u.nickname || u.id || '트레이더',
+          asset: totalVal,
+          profit: `${profitRate >= 0 ? '+' : ''}${profitRate}%`
+        };
+      });
+
+      computedList.sort((a,b) => b.asset - a.asset);
+      container.innerHTML = '';
+
+      computedList.forEach((r, i) => {
         const item = document.createElement('div');
         item.className = "flex items-center justify-between p-3 bg-slate-950/60 rounded-xl border border-slate-800/80";
         item.innerHTML = `
           <div class="flex items-center space-x-3">
             <span class="font-extrabold text-base ${i===0?'text-amber-400':i===1?'text-slate-300':i===2?'text-amber-600':'text-slate-500'}">#${i+1}</span>
             <div>
-              <div class="font-bold text-xs text-white">${r.name}</div>
+              <div class="font-bold text-xs text-white">${r.nickname} ${currentSessionUser && currentSessionUser.nickname === r.nickname ? '(나)' : ''}</div>
               <div class="text-[10px] text-slate-400">총 자산: ${r.asset.toLocaleString()} KRW</div>
             </div>
           </div>
