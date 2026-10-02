@@ -4,28 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>STOCK & COIN ARENA | 주식 & 코인 대전</title>
+  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Chart.js for fallback local canvas -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- TradingView Widget Script -->
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-  
+  <!-- Lightweight Charts v4.1.1 (TradingView Lightweight Charts Standalone) -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap');
+    
     body {
       font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
       background-color: #030712;
       color: #f3f4f6;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
+
+    /* Custom Scrollbar Styling */
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: #0b0f19; }
     ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #374151; }
 
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Toast Animation */
     .toast-anim {
       animation: slideInDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
@@ -33,6 +40,7 @@
       0% { transform: translateY(-100%) scale(0.95); opacity: 0; }
       100% { transform: translateY(0) scale(1); opacity: 1; }
     }
+
     .pulse-glow {
       animation: pulseGlow 2s infinite;
     }
@@ -42,7 +50,7 @@
     }
   </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col items-center justify-start antialiased selection:bg-blue-600 selection:text-white">
+<body class="bg-slate-950 text-gray-100 min-h-screen flex flex-col items-center justify-start antialiased selection:bg-blue-600 selection:text-white">
 
   <!-- Mobile App Container (Max-Width 600px Centered) -->
   <div class="w-full max-w-[600px] min-h-screen bg-slate-950 flex flex-col border-x border-slate-900 shadow-2xl relative pb-20">
@@ -50,20 +58,20 @@
     <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-md">
       <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('market')">
         <div class="bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
-          <i class="fa-solid fa-chart-line text-white text-lg"></i>
+          <i class="fa-solid fa-chart-candlestick text-white text-lg"></i>
         </div>
         <div>
           <h1 class="font-black text-base sm:text-lg tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
             📈 주식 & 코인 대전
           </h1>
-          <p class="text-[10px] text-slate-400 font-medium">실시간 트레이딩 & 속보 시뮬레이터</p>
+          <p class="text-[10px] text-slate-400 font-medium">Lightweight Charts 차트 & 실시간 속보</p>
         </div>
       </div>
 
       <div class="flex items-center space-x-2">
         <button onclick="openAdminAuthModal()" class="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-md shadow-purple-900/30 active:scale-95 transition">
           <i class="fa-solid fa-crown text-amber-300"></i>
-          <span>관리자 👑</span>
+          <span id="admin-header-label">관리자 👑</span>
         </button>
       </div>
     </header>
@@ -85,10 +93,11 @@
       </div>
     </section>
 
+    <!-- Navigation Tabs Bar -->
     <nav class="sticky top-[57px] z-30 bg-slate-900/95 border-b border-slate-800/80 backdrop-blur-md">
       <div class="flex overflow-x-auto text-xs font-bold divide-x divide-slate-800/40 no-scrollbar">
         <button onclick="switchTab('market')" id="tab-btn-market" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-blue-500 text-blue-400 whitespace-nowrap flex items-center justify-center space-x-1">
-          <i class="fa-solid fa-arrow-trend-up"></i><span>거래소</span>
+          <i class="fa-solid fa-chart-line"></i><span>거래소</span>
         </button>
         <button onclick="switchTab('portfolio')" id="tab-btn-portfolio" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center justify-center space-x-1">
           <i class="fa-solid fa-wallet"></i><span>내 지갑</span>
@@ -111,12 +120,13 @@
     <!-- Main Dynamic Content Container -->
     <main class="p-3 sm:p-4 space-y-4 flex-1">
 
+      <!-- TAB 1: MARKET EXCHANGE VIEW -->
       <section id="tab-market" class="tab-content space-y-4">
         
         <!-- Category Filter & Search Bar -->
         <div class="bg-slate-900 p-2.5 rounded-2xl border border-slate-800 space-y-2.5 shadow-sm">
-          <div class="flex items-center justify-between gap-1 overflow-x-auto pb-1 text-xs">
-            <button onclick="filterCategory('ALL')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-blue-600 text-white whitespace-nowrap">전체 (23)</button>
+          <div class="flex items-center justify-between gap-1 overflow-x-auto pb-1 text-xs no-scrollbar">
+            <button onclick="filterCategory('ALL')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-blue-600 text-white whitespace-nowrap">전체</button>
             <button onclick="filterCategory('DOMESTIC')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">국내 🇰🇷</button>
             <button onclick="filterCategory('OVERSEAS')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">해외 🇺🇸</button>
             <button onclick="filterCategory('CRYPTO')" class="cat-btn px-3 py-1.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 whitespace-nowrap">코인 🪙</button>
@@ -127,7 +137,7 @@
           </div>
         </div>
 
-        <!-- Selected Asset Info Header & Chart -->
+        <!-- Selected Asset Header & Lightweight Chart Container -->
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3 shadow-lg">
           <div class="flex items-center justify-between">
             <div>
@@ -142,20 +152,18 @@
               </div>
             </div>
 
-            <!-- Chart Display Mode Switch -->
+            <!-- Chart Type Selector Switch (Candlestick vs Line) -->
             <div class="flex items-center space-x-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px]">
-              <button onclick="setChartEngine('tradingview')" id="chart-engine-tv" class="px-2.5 py-1 font-bold rounded-lg bg-blue-600 text-white">TradingView</button>
-              <button onclick="setChartEngine('canvas')" id="chart-engine-canvas" class="px-2.5 py-1 font-bold rounded-lg text-slate-400 hover:text-white">기본차트</button>
+              <button onclick="setChartType('candlestick')" id="chart-type-candle" class="px-2.5 py-1 font-bold rounded-lg bg-blue-600 text-white transition">캔들 차트</button>
+              <button onclick="setChartType('line')" id="chart-type-line" class="px-2.5 py-1 font-bold rounded-lg text-slate-400 hover:text-white transition">라인 차트</button>
             </div>
           </div>
 
-          <!-- TradingView Widget / Canvas Container -->
-          <div class="w-full h-[280px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 relative shadow-inner">
-            <!-- TradingView Widget Canvas Container -->
-            <div id="tradingview_widget_container" class="w-full h-full"></div>
-            <!-- Canvas Fallback Chart Container -->
-            <div id="canvas_chart_container" class="w-full h-full hidden p-2">
-              <canvas id="marketChart"></canvas>
+          <!-- Lightweight Charts Render Box -->
+          <div class="w-full h-[300px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 relative shadow-inner">
+            <div id="lightweight_chart_container" class="w-full h-full"></div>
+            <div id="chart-loading-overlay" class="absolute inset-0 bg-slate-950/80 flex items-center justify-center text-xs text-blue-400 font-bold hidden">
+              <i class="fa-solid fa-spinner fa-spin mr-2"></i> 차트 데이터 로딩 중...
             </div>
           </div>
 
@@ -215,6 +223,7 @@
 
       </section>
 
+      <!-- TAB 2: PORTFOLIO & WALLET TRANSFER VIEW -->
       <section id="tab-portfolio" class="tab-content hidden space-y-4">
         <!-- Asset Summary Cards -->
         <div class="grid grid-cols-2 gap-3">
@@ -227,6 +236,21 @@
             <span class="text-[11px] text-slate-400 font-semibold">보유 현금</span>
             <h3 id="pf-cash" class="text-lg font-black text-emerald-400">10,000,000 KRW</h3>
             <button onclick="resetAccount()" class="text-[10px] text-slate-500 hover:text-slate-300 underline">자산 초기화 (1천만원)</button>
+          </div>
+        </div>
+
+        <!-- Wallet Transfer Box -->
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center">
+            <i class="fa-solid fa-paper-plane text-emerald-400 mr-2"></i>내 지갑 자산 송금하기
+          </h3>
+          <p class="text-[11px] text-slate-400">다른 트레이더에게 현금(KRW)을 실시간 송금할 수 있습니다.</p>
+          <div class="space-y-2">
+            <input type="text" id="transfer-recipient" placeholder="받는 사람 트레이더 이름" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <input type="number" id="transfer-amount" min="1000" placeholder="송금 금액 (KRW)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <button onclick="executeMoneyTransfer()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs rounded-xl transition">
+              송금 완료
+            </button>
           </div>
         </div>
 
@@ -252,6 +276,7 @@
         </div>
       </section>
 
+      <!-- TAB 3: RANKINGS VIEW -->
       <section id="tab-rank" class="tab-content hidden space-y-4">
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -268,6 +293,7 @@
         </div>
       </section>
 
+      <!-- TAB 4: COMMUNITY BOARD VIEW -->
       <section id="tab-community" class="tab-content hidden space-y-4">
         <!-- New Post Form -->
         <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3">
@@ -288,6 +314,7 @@
         </div>
       </section>
 
+      <!-- TAB 5: BREAKING NEWS TIMELINE VIEW -->
       <section id="tab-news" class="tab-content hidden space-y-4">
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
           <h3 class="text-sm font-bold text-white flex items-center">
@@ -300,6 +327,7 @@
         </div>
       </section>
 
+      <!-- TAB 6: ADMIN CONTROL PANEL VIEW -->
       <section id="tab-admin" class="tab-content hidden space-y-4">
         <div class="bg-slate-900 rounded-2xl border border-amber-500/40 p-4 space-y-4 shadow-xl">
           <div class="flex items-center space-x-3 border-b border-slate-800 pb-3">
@@ -308,7 +336,7 @@
             </div>
             <div>
               <h2 class="text-base font-bold text-white">관리자 전용 속보 발행 센터</h2>
-              <p class="text-[11px] text-slate-400">종목(최대 5개) 선택 후 뉴스를 생성하면 DB 저장 및 시장 가격 급변이 유발됩니다.</p>
+              <p class="text-[11px] text-slate-400">종목(최대 5개) 선택 후 뉴스를 생성하면 Firebase DB 저장 및 시장 가격 급변이 유발됩니다.</p>
             </div>
           </div>
 
@@ -341,7 +369,7 @@
             </div>
 
             <button onclick="publishAdminNews()" class="w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition">
-              <i class="fa-solid fa-bullhorn mr-1.5"></i>속보 발행 및 DB 저장 (시세 영향 발동)
+              <i class="fa-solid fa-bullhorn mr-1.5"></i>속보 발행 및 Firebase 저장 (시세 영향 발동)
             </button>
           </div>
         </div>
@@ -350,6 +378,7 @@
     </main>
   </div>
 
+  <!-- Admin Auth Modal Dialog -->
   <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-sm p-5 rounded-2xl shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
@@ -369,16 +398,19 @@
     </div>
   </div>
 
+  <!-- Firebase Modular Scripts Initializer -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'stock-crypto-arena';
+    
+    // Explicit Firebase Config provided by user (projectId: stook-214a2)
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-      apiKey: "demo-key",
-      authDomain: "demo.firebaseapp.com",
-      projectId: "demo-project"
+      projectId: "stook-214a2",
+      authDomain: "stook-214a2.firebaseapp.com",
+      storageBucket: "stook-214a2.appspot.com"
     };
 
     let app, auth, db;
@@ -409,14 +441,14 @@
         }
       });
     } catch(err) {
-      console.warn("Firebase fallback to local memory state:", err);
+      console.warn("Firebase initialization fallback mode active:", err);
     }
 
-    // Firebase Data Listener Setup
+    // Firebase Firestore Realtime Listeners
     function initFirebaseListeners() {
       if (!db || !currentUser) return;
 
-      // 1. Listen for Custom News DB (`custom_news`)
+      // 1. Listen for Custom News Collection
       const newsCol = collection(db, 'artifacts', appId, 'public', 'data', 'custom_news');
       onSnapshot(newsCol, (snapshot) => {
         let loadedNews = [];
@@ -425,11 +457,13 @@
         });
         if(loadedNews.length > 0) {
           window.dbCustomNews = loadedNews;
-          window.renderNewsTimeline();
+          if (typeof window.renderNewsTimeline === 'function') {
+            window.renderNewsTimeline();
+          }
         }
       }, (error) => console.log("News snapshot error:", error));
 
-      // 2. Sync Community Posts DB
+      // 2. Sync Community Posts Collection
       const postsCol = collection(db, 'artifacts', appId, 'public', 'data', 'community_posts');
       onSnapshot(postsCol, (snapshot) => {
         let posts = [];
@@ -439,19 +473,26 @@
         posts.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
         if(posts.length > 0) {
           window.communityPosts = posts;
-          window.renderCommunityPosts();
+          if (typeof window.renderCommunityPosts === 'function') {
+            window.renderCommunityPosts();
+          }
         }
       }, (error) => console.log("Posts snapshot error:", error));
     }
   </script>
 
+  <!-- Application Core Script -->
   <script>
     const ADMIN_PASS = "2783!!??wjdwogkr";
     let isAdminActive = false;
     let currentCategory = 'ALL';
     let selectedStockCode = '005930';
-    let chartEngine = 'tradingview'; // 'tradingview' or 'canvas'
-    let marketChart = null;
+    let chartType = 'candlestick'; // 'candlestick' or 'line'
+
+    // Lightweight Charts Instances
+    let lwChart = null;
+    let candlestickSeries = null;
+    let lineSeries = null;
 
     // User Wallet State
     let userWallet = {
@@ -461,51 +502,73 @@
       }
     };
 
-    // Stock & Crypto Instruments with TradingView Widget Symbols
+    // Helper: Generate historical OHLC (Candlestick) data ending today
+    function generateHistoricalCandles(basePrice, count = 30) {
+      const candles = [];
+      let currentPrice = basePrice * 0.9;
+      const now = Math.floor(Date.now() / 1000);
+      const daySeconds = 86400;
+
+      for (let i = count; i >= 0; i--) {
+        const time = now - (i * daySeconds);
+        const open = currentPrice;
+        const changePercent = (Math.random() * 0.06) - 0.028; // -2.8% to +3.2%
+        const close = Math.round(open * (1 + changePercent));
+        const high = Math.round(Math.max(open, close) * (1 + Math.random() * 0.015));
+        const low = Math.round(Math.min(open, close) * (1 - Math.random() * 0.015));
+
+        candles.push({ time, open, high, low, close });
+        currentPrice = close;
+      }
+      return candles;
+    }
+
+    // Stock & Crypto Instruments Data Pool
     let stocks = [
       // 국내 주식 (KRX)
-      { code: '005930', name: '삼성전자', category: 'DOMESTIC', price: 74500, tvSymbol: 'KRX:005930', history: [73000, 73500, 74000, 74500] },
-      { code: '000660', name: 'SK하이닉스', category: 'DOMESTIC', price: 182000, tvSymbol: 'KRX:000660', history: [178000, 180000, 182000] },
-      { code: '035420', name: 'NAVER', category: 'DOMESTIC', price: 195000, tvSymbol: 'KRX:035420', history: [192000, 194000, 195000] },
-      { code: '035720', name: '카카오', category: 'DOMESTIC', price: 48500, tvSymbol: 'KRX:035720', history: [49000, 48800, 48500] },
-      { code: '005380', name: '현대차', category: 'DOMESTIC', price: 245000, tvSymbol: 'KRX:005380', history: [240000, 242000, 245000] },
-      { code: '006400', name: '삼성SDI', category: 'DOMESTIC', price: 390000, tvSymbol: 'KRX:006400', history: [385000, 388000, 390000] },
-      { code: '207940', name: '삼성바이오로직스', category: 'DOMESTIC', price: 810000, tvSymbol: 'KRX:207940', history: [805000, 808000, 810000] },
-      { code: '068270', name: '셀트리온', category: 'DOMESTIC', price: 185000, tvSymbol: 'KRX:068270', history: [183000, 184000, 185000] },
+      { code: '005930', name: '삼성전자', category: 'DOMESTIC', price: 74500, candles: generateHistoricalCandles(74500) },
+      { code: '000660', name: 'SK하이닉스', category: 'DOMESTIC', price: 182000, candles: generateHistoricalCandles(182000) },
+      { code: '035420', name: 'NAVER', category: 'DOMESTIC', price: 195000, candles: generateHistoricalCandles(195000) },
+      { code: '035720', name: '카카오', category: 'DOMESTIC', price: 48500, candles: generateHistoricalCandles(48500) },
+      { code: '005380', name: '현대차', category: 'DOMESTIC', price: 245000, candles: generateHistoricalCandles(245000) },
+      { code: '006400', name: '삼성SDI', category: 'DOMESTIC', price: 390000, candles: generateHistoricalCandles(390000) },
+      { code: '207940', name: '삼성바이오로직스', category: 'DOMESTIC', price: 810000, candles: generateHistoricalCandles(810000) },
+      { code: '068270', name: '셀트리온', category: 'DOMESTIC', price: 185000, candles: generateHistoricalCandles(185000) },
 
       // 해외 주식 (NASDAQ / NYSE)
-      { code: 'NVDA', name: '엔비디아 (NVIDIA)', category: 'OVERSEAS', price: 165000, tvSymbol: 'NASDAQ:NVDA', history: [160000, 162000, 165000] },
-      { code: 'AAPL', name: '애플 (Apple)', category: 'OVERSEAS', price: 310000, tvSymbol: 'NASDAQ:AAPL', history: [305000, 308000, 310000] },
-      { code: 'TSLA', name: '테슬라 (Tesla)', category: 'OVERSEAS', price: 280000, tvSymbol: 'NASDAQ:TSLA', history: [270000, 275000, 280000] },
-      { code: 'MSFT', name: '마이크로소프트', category: 'OVERSEAS', price: 580000, tvSymbol: 'NASDAQ:MSFT', history: [575000, 578000, 580000] },
-      { code: 'AMZN', name: '아마존', category: 'OVERSEAS', price: 250000, tvSymbol: 'NASDAQ:AMZN', history: [245000, 248000, 250000] },
-      { code: 'GOOGL', name: '알파벳(구글)', category: 'OVERSEAS', price: 230000, tvSymbol: 'NASDAQ:GOOGL', history: [225000, 228000, 230000] },
-      { code: 'PLTR', name: '팔란티어', category: 'OVERSEAS', price: 35000, tvSymbol: 'NYSE:PLTR', history: [33000, 34000, 35000] },
+      { code: 'NVDA', name: '엔비디아 (NVIDIA)', category: 'OVERSEAS', price: 165000, candles: generateHistoricalCandles(165000) },
+      { code: 'AAPL', name: '애플 (Apple)', category: 'OVERSEAS', price: 310000, candles: generateHistoricalCandles(310000) },
+      { code: 'TSLA', name: '테슬라 (Tesla)', category: 'OVERSEAS', price: 280000, candles: generateHistoricalCandles(280000) },
+      { code: 'MSFT', name: '마이크로소프트', category: 'OVERSEAS', price: 580000, candles: generateHistoricalCandles(580000) },
+      { code: 'AMZN', name: '아마존', category: 'OVERSEAS', price: 250000, candles: generateHistoricalCandles(250000) },
+      { code: 'GOOGL', name: '알파벳(구글)', category: 'OVERSEAS', price: 230000, candles: generateHistoricalCandles(230000) },
+      { code: 'PLTR', name: '팔란티어', category: 'OVERSEAS', price: 35000, candles: generateHistoricalCandles(35000) },
 
-      // 가상화폐 (Crypto Binance/Upbit)
-      { code: 'BTC', name: '비트코인 (Bitcoin)', category: 'CRYPTO', price: 92000000, tvSymbol: 'BINANCE:BTCUSDT', history: [90000000, 91000000, 92000000] },
-      { code: 'ETH', name: '이더리움 (Ethereum)', category: 'CRYPTO', price: 4800000, tvSymbol: 'BINANCE:ETHUSDT', history: [4700000, 4750000, 4800000] },
-      { code: 'SOL', name: '솔라나 (Solana)', category: 'CRYPTO', price: 210000, tvSymbol: 'BINANCE:SOLUSDT', history: [200000, 205000, 210000] },
-      { code: 'XRP', name: '리플 (Ripple)', category: 'CRYPTO', price: 820, tvSymbol: 'BINANCE:XRPUSDT', history: [800, 810, 820] },
-      { code: 'DOGE', name: '도지코인 (Dogecoin)', category: 'CRYPTO', price: 210, tvSymbol: 'BINANCE:DOGEUSDT', history: [200, 205, 210] },
-      { code: 'AVAX', name: '아발란체', category: 'CRYPTO', price: 45000, tvSymbol: 'BINANCE:AVAXUSDT', history: [44000, 44500, 45000] },
-      { code: 'SUI', name: '수이 (SUI)', category: 'CRYPTO', price: 2400, tvSymbol: 'BINANCE:SUIUSDT', history: [2300, 2350, 2400] },
-      { code: 'PEPE', name: '페페코인', category: 'CRYPTO', price: 0.012, tvSymbol: 'BINANCE:PEPEUSDT', history: [0.010, 0.011, 0.012] }
+      // 가상화폐 (Crypto)
+      { code: 'BTC', name: '비트코인 (Bitcoin)', category: 'CRYPTO', price: 92000000, candles: generateHistoricalCandles(92000000) },
+      { code: 'ETH', name: '이더리움 (Ethereum)', category: 'CRYPTO', price: 4800000, candles: generateHistoricalCandles(4800000) },
+      { code: 'SOL', name: '솔라나 (Solana)', category: 'CRYPTO', price: 210000, candles: generateHistoricalCandles(210000) },
+      { code: 'XRP', name: '리플 (Ripple)', category: 'CRYPTO', price: 820, candles: generateHistoricalCandles(820) },
+      { code: 'DOGE', name: '도지코인 (Dogecoin)', category: 'CRYPTO', price: 210, candles: generateHistoricalCandles(210) },
+      { code: 'AVAX', name: '아발란체', category: 'CRYPTO', price: 45000, candles: generateHistoricalCandles(45000) },
+      { code: 'SUI', name: '수이 (SUI)', category: 'CRYPTO', price: 2400, candles: generateHistoricalCandles(2400) },
+      { code: 'PEPE', name: '페페코인', category: 'CRYPTO', price: 12, candles: generateHistoricalCandles(12) }
     ];
 
-    // Seed prevPrice and openPrice
+    // Seed prevPrice from candle baseline
     stocks.forEach(s => {
-      s.prevPrice = s.history[0];
+      s.prevPrice = s.candles[0].open;
+      s.price = s.candles[s.candles.length - 1].close;
     });
 
     window.dbCustomNews = [];
     let localNewsTimeline = [
-      { id: 'n1', title: '[개장 속보] 글로벌 증시 환율 안정세 속 기술주 상승 출발', desc: '주요 기술주 및 코인 시장으로 강력한 유동성이 유입되고 있습니다.', time: '10분 전', impact: 'GOOD' }
+      { id: 'n1', title: '[개장 속보] 글로벌 증시 환율 안정세 속 기술주 상승 출발', desc: 'Lightweight Charts 차트 반영 완료! 유동성이 빠르게 진입하고 있습니다.', timeStr: '10분 전', impact: 'GOOD' }
     ];
 
     window.communityPosts = [
-      { id: 'p1', author: '버핏의제자', title: '비트코인 이번 주 신고가 돌파 가능할까요?', content: '차트상 전형적인 우상향 모멘텀입니다. 성투합시다!', time: '5분 전', likes: 12 },
-      { id: 'p2', author: '삼성전자존버', title: '삼성전자 반도체 감산 호재 속보 기대합니다', content: '관리자님이 대형 호재 속보 하나 터뜨려주면 날아갈듯!', time: '12분 전', likes: 8 }
+      { id: 'p1', author: '버핏의제자', title: '비트코인 신고가 모멘텀 돌파 예상', content: 'Lightweight 차트로 보니 차트 흐름이 매우 견고합니다.', timeStr: '5분 전', likes: 14 },
+      { id: 'p2', author: '삼성전자존버', title: '삼성전자 반도체 감산 호재 속보 기다리는 중', content: '관리자님이 호재 속보 보내면 차트 봉 솟아오를듯!', timeStr: '12분 전', likes: 9 }
     ];
 
     let rankers = [
@@ -516,7 +579,7 @@
     ];
 
     window.onload = function() {
-      initChartCanvas();
+      initLightweightChart();
       renderStockList();
       updateSelectedStockUI();
       updateWalletUI();
@@ -527,6 +590,101 @@
       startMarketSimulator();
       startAutoNewsScheduler();
     };
+
+    function initLightweightChart() {
+      const container = document.getElementById('lightweight_chart_container');
+      container.innerHTML = '';
+
+      if (typeof LightweightCharts === 'undefined') {
+        console.error("Lightweight Charts library not loaded.");
+        return;
+      }
+
+      lwChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        layout: {
+          background: { type: 'solid', color: '#020617' },
+          textColor: '#94a3b8',
+        },
+        grid: {
+          vertLines: { color: '#1e293b' },
+          horzLines: { color: '#1e293b' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+          borderColor: '#334155',
+        },
+        timeScale: {
+          borderColor: '#334155',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      // Series initialization
+      candlestickSeries = lwChart.addCandlestickSeries({
+        upColor: '#f43f5e',
+        downColor: '#3b82f6',
+        borderVisible: false,
+        wickUpColor: '#f43f5e',
+        wickDownColor: '#3b82f6',
+      });
+
+      lineSeries = lwChart.addLineSeries({
+        color: '#3b82f6',
+        lineWidth: 2,
+        visible: false,
+      });
+
+      // Window resize handling for auto-responsive chart
+      window.addEventListener('resize', () => {
+        if(lwChart && container) {
+          lwChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+        }
+      });
+
+      updateLightweightChartData();
+    }
+
+    function updateLightweightChartData() {
+      const stock = stocks.find(s => s.code === selectedStockCode);
+      if (!stock || !lwChart) return;
+
+      if (chartType === 'candlestick') {
+        candlestickSeries.applyOptions({ visible: true });
+        lineSeries.applyOptions({ visible: false });
+        candlestickSeries.setData(stock.candles);
+      } else {
+        candlestickSeries.applyOptions({ visible: false });
+        lineSeries.applyOptions({ visible: true });
+        const lineData = stock.candles.map(c => ({ time: c.time, value: c.close }));
+        
+        const isUp = stock.price >= stock.prevPrice;
+        lineSeries.applyOptions({ color: isUp ? '#f43f5e' : '#3b82f6' });
+        lineSeries.setData(lineData);
+      }
+
+      lwChart.timeScale().fitContent();
+    }
+
+    function setChartType(type) {
+      chartType = type;
+      const btnCandle = document.getElementById('chart-type-candle');
+      const btnLine = document.getElementById('chart-type-line');
+
+      if (type === 'candlestick') {
+        btnCandle.className = "px-2.5 py-1 font-bold rounded-lg bg-blue-600 text-white transition";
+        btnLine.className = "px-2.5 py-1 font-bold rounded-lg text-slate-400 hover:text-white transition";
+      } else {
+        btnLine.className = "px-2.5 py-1 font-bold rounded-lg bg-blue-600 text-white transition";
+        btnCandle.className = "px-2.5 py-1 font-bold rounded-lg text-slate-400 hover:text-white transition";
+      }
+
+      updateLightweightChartData();
+    }
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -545,7 +703,12 @@
       }
 
       if(tabId === 'portfolio') renderPortfolioUI();
-      if(tabId === 'market' && chartEngine === 'tradingview') renderTradingViewWidget();
+      if(tabId === 'market' && lwChart) {
+        setTimeout(() => {
+          const container = document.getElementById('lightweight_chart_container');
+          if(container) lwChart.applyOptions({ width: container.clientWidth });
+        }, 100);
+      }
     }
 
     function filterCategory(cat) {
@@ -598,11 +761,7 @@
       selectedStockCode = code;
       renderStockList();
       updateSelectedStockUI();
-      if(chartEngine === 'tradingview') {
-        renderTradingViewWidget();
-      } else {
-        updateCanvasChart();
-      }
+      updateLightweightChartData();
     }
 
     function updateSelectedStockUI() {
@@ -625,94 +784,6 @@
       document.getElementById('sell-available-qty').innerText = holding;
       calculateBuyTotal();
       calculateSellTotal();
-    }
-
-    function renderTradingViewWidget() {
-      const stock = stocks.find(s => s.code === selectedStockCode);
-      if(!stock) return;
-
-      const tvContainer = document.getElementById('tradingview_widget_container');
-      tvContainer.innerHTML = ''; // clear existing widget
-
-      if (window.TradingView) {
-        new window.TradingView.widget({
-          "autosize": true,
-          "symbol": stock.tvSymbol || "KRX:005930",
-          "interval": "D",
-          "timezone": "Asia/Seoul",
-          "theme": "dark",
-          "style": "1",
-          "locale": "kr",
-          "toolbar_bg": "#0f172a",
-          "enable_publishing": false,
-          "allow_symbol_change": false,
-          "container_id": "tradingview_widget_container"
-        });
-      }
-    }
-
-    function setChartEngine(engine) {
-      chartEngine = engine;
-      const tvBtn = document.getElementById('chart-engine-tv');
-      const canvasBtn = document.getElementById('chart-engine-canvas');
-      const tvContainer = document.getElementById('tradingview_widget_container');
-      const canvasContainer = document.getElementById('canvas_chart_container');
-
-      if (engine === 'tradingview') {
-        tvBtn.className = "px-2.5 py-1 font-bold rounded-lg bg-blue-600 text-white";
-        canvasBtn.className = "px-2.5 py-1 font-bold rounded-lg text-slate-400 hover:text-white";
-        tvContainer.classList.remove('hidden');
-        canvasContainer.classList.add('hidden');
-        renderTradingViewWidget();
-      } else {
-        canvasBtn.className = "px-2.5 py-1 font-bold rounded-lg bg-blue-600 text-white";
-        tvBtn.className = "px-2.5 py-1 font-bold rounded-lg text-slate-400 hover:text-white";
-        tvContainer.classList.add('hidden');
-        canvasContainer.classList.remove('hidden');
-        updateCanvasChart();
-      }
-    }
-
-    function initChartCanvas() {
-      const ctx = document.getElementById('marketChart').getContext('2d');
-      const stock = stocks.find(s => s.code === selectedStockCode);
-
-      marketChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['10분전', '5분전', '3분전', '현재'],
-          datasets: [{
-            data: stock ? stock.history : [70000, 71000, 72000, 74500],
-            borderColor: '#f43f5e',
-            backgroundColor: 'rgba(244, 63, 94, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 9 } } },
-            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 9 } } }
-          }
-        }
-      });
-    }
-
-    function updateCanvasChart() {
-      if(!marketChart) return;
-      const stock = stocks.find(s => s.code === selectedStockCode);
-      if(!stock) return;
-
-      const isUp = stock.price >= stock.prevPrice;
-      marketChart.data.labels = stock.history.map((_, i) => `${i + 1}회차`);
-      marketChart.data.datasets[0].data = stock.history;
-      marketChart.data.datasets[0].borderColor = isUp ? '#f43f5e' : '#60a5fa';
-      marketChart.data.datasets[0].backgroundColor = isUp ? 'rgba(244, 63, 94, 0.15)' : 'rgba(96, 165, 250, 0.15)';
-      marketChart.update();
     }
 
     function calculateBuyTotal() {
@@ -835,6 +906,24 @@
       profitRateEl.className = `text-[11px] font-bold ${totalProfit >= 0 ? 'text-rose-400' : 'text-blue-400'}`;
     }
 
+    function executeMoneyTransfer() {
+      const recipient = document.getElementById('transfer-recipient').value.trim();
+      const amount = parseInt(document.getElementById('transfer-amount').value);
+
+      if (!recipient) return alert('받는 사람의 닉네임을 입력해 주세요.');
+      if (!amount || amount < 1000) return alert('최소 송금 금액은 1,000 KRW 이상입니다.');
+      if (userWallet.cash < amount) return alert('보유 현금이 부족합니다!');
+
+      userWallet.cash -= amount;
+      updateWalletUI();
+      renderPortfolioUI();
+
+      document.getElementById('transfer-recipient').value = '';
+      document.getElementById('transfer-amount').value = '';
+
+      showToast(`💸 [송금 완료] ${recipient}님에게 ${amount.toLocaleString()} KRW 전송 완료!`, 'GOOD');
+    }
+
     function resetAccount() {
       userWallet = { cash: 10000000, holdings: {} };
       updateWalletUI();
@@ -860,6 +949,7 @@
         isAdminActive = true;
         closeAdminAuthModal();
         document.getElementById('admin-tab-nav').classList.remove('hidden');
+        document.getElementById('admin-header-label').innerText = "관리자 ON 👑";
         switchTab('admin');
         showToast('👑 관리자 인증이 완료되었습니다!', 'GOOD');
       } else {
@@ -895,13 +985,24 @@
       const affectedCodes = Array.from(checkedBoxes).map(cb => cb.value);
       const isGood = newsType === 'GOOD';
 
-      // 1. Instantly fluctuate market prices by ±10% to ±25%
+      // 1. Instantly fluctuate market prices by ±10% to ±25% and update Lightweight candles
       affectedCodes.forEach(code => {
         const stock = stocks.find(s => s.code === code);
         if(stock) {
           const factor = (Math.random() * 0.15 + 0.10) * (isGood ? 1 : -1);
+          const oldPrice = stock.price;
           stock.price = Math.round(stock.price * (1 + factor));
-          stock.history.push(stock.price);
+
+          // Append new Candle
+          const lastCandle = stock.candles[stock.candles.length - 1];
+          const time = lastCandle ? lastCandle.time + 86400 : Math.floor(Date.now() / 1000);
+          stock.candles.push({
+            time: time,
+            open: oldPrice,
+            high: Math.max(oldPrice, stock.price),
+            low: Math.min(oldPrice, stock.price),
+            close: stock.price
+          });
         }
       });
 
@@ -914,7 +1015,7 @@
         timeStr: '방금 전'
       };
 
-      // 2. Permanent Storage into Firebase Firestore `custom_news`
+      // 2. Save into Firebase Firestore `custom_news`
       if (window.firebaseDb && window.firebaseAppId) {
         try {
           const newsCol = collection(window.firebaseDb, 'artifacts', window.firebaseAppId, 'public', 'data', 'custom_news');
@@ -924,7 +1025,7 @@
         }
       }
 
-      // Add to local timeline fallback
+      // Local fallback append
       localNewsTimeline.unshift(newsData);
 
       // Show Toast Notification
@@ -933,7 +1034,7 @@
       // Refresh UIs
       renderStockList();
       updateSelectedStockUI();
-      if(chartEngine === 'canvas') updateCanvasChart();
+      updateLightweightChartData();
       renderNewsTimeline();
 
       // Reset Form
@@ -949,7 +1050,6 @@
       container.innerHTML = '';
 
       const combinedNews = [...(window.dbCustomNews || []), ...localNewsTimeline];
-      // Deduplicate by title/createdAt
       const uniqueNews = Array.from(new Map(combinedNews.map(item => [item.title, item])).values());
       uniqueNews.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
 
@@ -969,7 +1069,6 @@
       });
     }
 
-    // Automatic Random News Scheduler (Triggers Every 25-30s)
     function startAutoNewsScheduler() {
       setInterval(() => {
         const pool = (window.dbCustomNews && window.dbCustomNews.length > 0) ? window.dbCustomNews : localNewsTimeline;
@@ -978,24 +1077,32 @@
         const randomNews = pool[Math.floor(Math.random() * pool.length)];
         const isGood = randomNews.impact === 'GOOD';
 
-        // Apply price shock to random 1-3 stocks
         const sampleCount = Math.floor(Math.random() * 3) + 1;
         for(let i = 0; i < sampleCount; i++) {
           const randomStock = stocks[Math.floor(Math.random() * stocks.length)];
           const factor = (Math.random() * 0.10 + 0.05) * (isGood ? 1 : -1);
+          const oldPrice = randomStock.price;
           randomStock.price = Math.round(randomStock.price * (1 + factor));
-          randomStock.history.push(randomStock.price);
+
+          const lastCandle = randomStock.candles[randomStock.candles.length - 1];
+          const time = lastCandle ? lastCandle.time + 86400 : Math.floor(Date.now() / 1000);
+          randomStock.candles.push({
+            time: time,
+            open: oldPrice,
+            high: Math.max(oldPrice, randomStock.price),
+            low: Math.min(oldPrice, randomStock.price),
+            close: randomStock.price
+          });
         }
 
-        showToast(`⚡ [시상 파급 속보] ${randomNews.title}`, isGood ? 'GOOD' : 'BAD');
+        showToast(`⚡ [시황 파급 속보] ${randomNews.title}`, isGood ? 'GOOD' : 'BAD');
         renderStockList();
         updateSelectedStockUI();
-        if(chartEngine === 'canvas') updateCanvasChart();
+        updateLightweightChartData();
         updateWalletUI();
-      }, 28000); // Every 28 seconds
+      }, 28000);
     }
 
-    // Real-time Stock Market Tick Simulator (Every 1.5 - 4s)
     function startMarketSimulator() {
       function tick() {
         const sampleCount = Math.floor(Math.random() * 4) + 2;
@@ -1003,21 +1110,28 @@
           const idx = Math.floor(Math.random() * stocks.length);
           const stock = stocks[idx];
           
-          const pct = (Math.random() * 4.8 - 2.35) / 100;
+          const pct = (Math.random() * 0.048 - 0.0235); // -2.35% to +2.45%
+          const oldPrice = stock.price;
           let newPrice = Math.round(stock.price * (1 + pct));
           if(newPrice < 1) newPrice = 1;
 
           stock.price = newPrice;
-          stock.history.push(newPrice);
-          if(stock.history.length > 20) stock.history.shift();
+
+          // Realtime update last candlestick
+          const lastCandle = stock.candles[stock.candles.length - 1];
+          if (lastCandle) {
+            lastCandle.close = newPrice;
+            if (newPrice > lastCandle.high) lastCandle.high = newPrice;
+            if (newPrice < lastCandle.low) lastCandle.low = newPrice;
+          }
         }
 
         renderStockList();
         updateSelectedStockUI();
-        if(chartEngine === 'canvas') updateCanvasChart();
+        updateLightweightChartData();
         updateWalletUI();
 
-        const nextTime = Math.floor(Math.random() * 3000) + 1500;
+        const nextTime = Math.floor(Math.random() * 2500) + 1500;
         setTimeout(tick, nextTime);
       }
       tick();
@@ -1130,7 +1244,7 @@
 
       container.appendChild(toast);
       setTimeout(() => {
-        toast.remove();
+        if (toast.parentElement) toast.remove();
       }, 5000);
     }
   </script>
