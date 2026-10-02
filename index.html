@@ -1,1132 +1,1020 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주식 & 코인 대전</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome 아이콘 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f3f4f6; max-width: 600px; margin: 0 auto; }
-        @media (min-width: 768px) {
-            body { max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-height: 100vh; }
-        }
-        .hide { display: none !important; }
-        
-        /* 토스트 알림 애니메이션 */
-        @keyframes slideDown {
-            0% { transform: translate(-50%, -100%); opacity: 0; }
-            100% { transform: translate(-50%, 0); opacity: 1; }
-        }
-        .toast-animate {
-            animation: slideDown 0.4s ease-out forwards;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주식 & 코인 대전</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&display=swap');
+    body { font-family: 'Pretendard', sans-serif; }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    .toast-anim { animation: slideDown 0.4s ease-out forwards; }
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex flex-col h-screen justify-between select-none relative">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
 
-    <!-- 뉴스 속보 토스트 알림 (화면 상단 고정) -->
-    <div id="toast-notification" class="fixed top-3 left-1/2 -translate-x-1/2 w-[90%] max-w-[540px] bg-slate-900/95 text-white p-3.5 rounded-xl shadow-2xl z-50 hide border border-slate-700/80 backdrop-blur-md">
-        <div class="flex items-start gap-3">
-            <div id="toast-icon-bg" class="bg-red-500/20 p-2 rounded-lg text-red-400 shrink-0 mt-0.5">
-                <i class="fa-solid fa-newspaper text-lg"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-center mb-1">
-                    <span id="toast-tag" class="text-[10px] uppercase font-extrabold bg-red-500 text-white px-1.5 py-0.5 rounded">속보</span>
-                    <span id="toast-time" class="text-[11px] text-gray-400">방금 전</span>
-                </div>
-                <h4 id="toast-title" class="font-bold text-sm text-gray-100 truncate">속보 뉴스 제목</h4>
-                <p id="toast-desc" class="text-xs text-gray-300 line-clamp-2 mt-0.5">뉴스 주요 내용 설명이 표시됩니다.</p>
-            </div>
-            <button onclick="closeToast()" class="text-gray-400 hover:text-white text-xs p-1">
-                <i class="fa-solid fa-xmark text-sm"></i>
-            </button>
+  <!-- Top Navigation Header -->
+  <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('market')">
+          <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-blue-500/30">
+            <i class="fa-solid me-1 fa-chart-line text-white text-xl"></i>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+              STOCK & COIN ARENA
+            </h1>
+            <p class="text-[10px] text-slate-400 font-medium">실시간 주식 & 코인 대전 시스템</p>
+          </div>
         </div>
+
+        <!-- Wallet Brief Info & Admin Button -->
+        <div class="flex items-center space-x-3 sm:space-x-5">
+          <div class="hidden md:flex items-center space-x-4 bg-slate-800/80 px-4 py-1.5 rounded-full border border-slate-700/60 text-xs">
+            <div>
+              <span class="text-slate-400">보유 원화:</span>
+              <span id="header-cash" class="font-bold text-emerald-400 ml-1">10,000,000 KRW</span>
+            </div>
+            <div class="h-3 w-px bg-slate-700"></div>
+            <div>
+              <span class="text-slate-400">총 평가:</span>
+              <span id="header-total-asset" class="font-bold text-blue-400 ml-1">10,000,000 KRW</span>
+            </div>
+          </div>
+
+          <!-- ADMIN BUTTON -->
+          <button onclick="openAdminAuthModal()" class="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-lg shadow-md hover:shadow-purple-500/25 transition">
+            <i class="fa-solid fa-crown text-yellow-300"></i>
+            <span>관리자 👑</span>
+          </button>
+        </div>
+      </div>
     </div>
+  </header>
 
-    <!-- 상단 헤더 -->
-    <header class="bg-blue-600 text-white p-4 text-center font-bold text-lg shadow-md flex justify-between items-center sticky top-0 z-20">
-        <span>📈 주식 & 코인 대전</span>
-        <span id="header-user" class="text-xs bg-blue-700 px-2 py-1 rounded">로그인 필요</span>
-    </header>
+  <!-- Breaking News Toast Notification -->
+  <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-xl pointer-events-none"></div>
 
-    <!-- 메인 컨텐츠 영역 -->
-    <main class="flex-1 overflow-y-auto p-4 pb-24">
+  <!-- Main Navigation Tabs -->
+  <nav class="bg-slate-900/60 border-b border-slate-800/80 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 flex space-x-1 sm:space-x-4 overflow-x-auto text-xs sm:text-sm font-semibold">
+      <button onclick="switchTab('market')" id="tab-btn-market" class="tab-btn px-4 py-3 border-b-2 border-blue-500 text-blue-400 flex items-center space-x-2">
+        <i class="fa-solid fa-arrow-trend-up"></i><span>거래소</span>
+      </button>
+      <button onclick="switchTab('portfolio')" id="tab-btn-portfolio" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+        <i class="fa-solid fa-wallet"></i><span>내 지갑</span>
+      </button>
+      <button onclick="switchTab('rank')" id="tab-btn-rank" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+        <i class="fa-solid fa-trophy"></i><span>자산 랭킹</span>
+      </button>
+      <button onclick="switchTab('community')" id="tab-btn-community" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+        <i class="fa-solid fa-comments"></i><span>커뮤니티</span>
+      </button>
+      <button onclick="switchTab('news')" id="tab-btn-news" class="tab-btn px-4 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+        <i class="fa-solid fa-newspaper"></i><span>속보 센터</span>
+      </button>
+      <button id="admin-tab-nav" onclick="switchTab('admin')" class="hidden tab-btn px-4 py-3 border-b-2 border-transparent text-yellow-400 font-bold flex items-center space-x-2">
+        <i class="fa-solid fa-crown text-yellow-400"></i><span>관리자 콘솔</span>
+      </button>
+    </div>
+  </nav>
 
-        <!-- 1. 주식 탭 -->
-        <section id="tab-stock" class="space-y-4">
-            <h2 class="text-xl font-bold text-gray-800">실시간 시장 대전 (동기화됨)</h2>
-            
-            <!-- 종목 검색 & 필터 카테고리 -->
-            <div class="flex gap-2 overflow-x-auto pb-1" id="stock-category-filter">
-                <button onclick="filterStockCategory('ALL')" class="cat-btn px-3 py-1 bg-blue-600 text-white rounded-full text-xs font-bold whitespace-nowrap">전체 (40+)</button>
-                <button onclick="filterStockCategory('KOR')" class="cat-btn px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-bold whitespace-nowrap">국내주식</button>
-                <button onclick="filterStockCategory('USA')" class="cat-btn px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-bold whitespace-nowrap">해외주식</button>
-                <button onclick="filterStockCategory('CRYPTO')" class="cat-btn px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-bold whitespace-nowrap">가상화폐</button>
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
+
+    <!-- ==================== MARKET TAB ==================== -->
+    <section id="tab-market" class="tab-content space-y-4">
+      
+      <!-- Category Filter Tabs -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800">
+        <div class="flex items-center space-x-2 overflow-x-auto max-w-full pb-1 sm:pb-0">
+          <button onclick="filterCategory('ALL')" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white">전체 (40+)</button>
+          <button onclick="filterCategory('DOMESTIC')" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 hover:bg-slate-700">국내 주식 🇰🇷</button>
+          <button onclick="filterCategory('OVERSEAS')" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 hover:bg-slate-700">해외 주식 🇺🇸</button>
+          <button onclick="filterCategory('CRYPTO')" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-400 hover:bg-slate-700">가상화폐 🪙</button>
+        </div>
+
+        <div class="relative w-full sm:w-64">
+          <input type="text" id="search-input" onkeyup="handleSearch()" placeholder="종목명/코드 검색..." class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Main Grid: Stock List + Detail/Chart -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        
+        <!-- Left: Stock List Grid (5/12) -->
+        <div class="lg:col-span-5 bg-slate-900 rounded-2xl border border-slate-800 p-3 flex flex-col h-[650px]">
+          <div class="flex items-center justify-between px-2 py-2 border-b border-slate-800 text-xs text-slate-400 font-semibold">
+            <span>종목명 / 카테고리</span>
+            <div class="space-x-4">
+              <span>현재가</span>
+              <span>전일대비</span>
             </div>
+          </div>
 
-            <div class="flex gap-2 overflow-x-auto pb-2" id="stock-list-container"></div>
+          <div id="stock-list-container" class="flex-1 overflow-y-auto divide-y divide-slate-800/60 pr-1 mt-1">
+            <!-- Dynamic Items generated via JS -->
+          </div>
+        </div>
 
-            <!-- 선택된 종목 상세 및 차트 -->
-            <div class="bg-white p-4 rounded-xl shadow space-y-3">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <h3 id="selected-stock-name" class="font-bold text-lg">삼성전자</h3>
-                            <span id="selected-stock-impact" class="text-xs font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">보통</span>
-                        </div>
-                        <p id="selected-stock-price" class="text-2xl font-black text-blue-600">0원</p>
-                    </div>
-                    <div class="flex gap-1">
-                        <button onclick="setChartType('line')" id="btn-line" class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded">라인</button>
-                        <button onclick="setChartType('candle')" id="btn-candle" class="px-3 py-1 text-xs bg-blue-600 text-white rounded">캔들차트</button>
-                    </div>
+        <!-- Right: Real-time Chart & Trade Execution (7/12) -->
+        <div class="lg:col-span-7 space-y-4">
+          <!-- Selected Stock Details Header -->
+          <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span id="selected-badge" class="px-2 py-0.5 text-[10px] rounded font-extrabold bg-blue-500/20 text-blue-400 border border-blue-500/30">국내</span>
+                  <h2 id="selected-name" class="text-xl font-bold text-white">삼성전자</h2>
+                  <span id="selected-code" class="text-xs text-slate-500 font-mono">005930</span>
                 </div>
-
-                <!-- 순수 Canvas 차트 영역 -->
-                <div class="relative h-48 w-full bg-gray-50 rounded border overflow-hidden">
-                    <canvas id="stockCanvas" class="w-full h-full"></canvas>
+                <div class="flex items-baseline space-x-3 mt-1">
+                  <span id="selected-price" class="text-2xl font-extrabold text-rose-500">74,500 KRW</span>
+                  <span id="selected-change" class="text-sm font-semibold text-rose-500">+2.34%</span>
                 </div>
+              </div>
 
-                <!-- 매수/매도 컨트롤 -->
-                <div class="flex gap-2 pt-2">
-                    <input type="number" id="trade-amount" min="1" value="1" class="w-20 border p-2 rounded text-center font-bold">
-                    <button onclick="executeTrade('buy')" class="flex-1 bg-red-500 text-white font-bold py-2 rounded shadow hover:bg-red-600 transition active:scale-95">즉시 매수</button>
-                    <button onclick="executeTrade('sell')" class="flex-1 bg-blue-500 text-white font-bold py-2 rounded shadow hover:bg-blue-600 transition active:scale-95">즉시 매도</button>
+              <!-- Chart Type Toggle -->
+              <div class="flex items-center space-x-1 bg-slate-800 p-1 rounded-lg self-start sm:self-auto">
+                <button onclick="setChartType('line')" id="chart-type-line" class="px-3 py-1 text-xs font-bold rounded bg-blue-600 text-white">라인</button>
+                <button onclick="setChartType('bar')" id="chart-type-bar" class="px-3 py-1 text-xs font-bold rounded text-slate-400 hover:text-white">캔들(바)</button>
+              </div>
+            </div>
+
+            <!-- Chart Canvas -->
+            <div class="w-full h-64 bg-slate-950/70 rounded-xl p-2 border border-slate-800/80 relative">
+              <canvas id="marketChart"></canvas>
+            </div>
+
+            <!-- Order Panel (Buy/Sell) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <!-- Buy Panel -->
+              <div class="bg-slate-950/60 p-4 rounded-xl border border-rose-900/30 space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-bold text-rose-400"><i class="fa-solid fa-circle-plus mr-1"></i>매수 주문</span>
+                  <span class="text-slate-400">가능: <b id="buy-available-cash" class="text-white">10,000,000</b> KRW</span>
                 </div>
-            </div>
-
-            <!-- 보유 주식 및 거래 내역 -->
-            <div class="bg-white p-4 rounded-xl shadow space-y-2">
-                <h4 class="font-bold text-gray-700 text-sm">보유 종목 및 거래 내역</h4>
-                <div id="portfolio-list" class="text-sm space-y-1 text-gray-600">보유 중인 주식이 없습니다.</div>
-            </div>
-        </section>
-
-        <!-- 2. 뉴스 탭 -->
-        <section id="tab-news" class="space-y-4 hide">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold text-gray-800">📰 실시간 속보 & 이슈</h2>
-                <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full"><i class="fa-solid fa-bolt text-amber-500"></i> AI 심층 분석 중</span>
-            </div>
-            
-            <p class="text-xs text-gray-500">뉴스는 시장 시세 변동에 실시간으로 반영되어 연관 종목의 주가를 변화시킵니다.</p>
-
-            <div id="news-feed" class="space-y-3">
-                <!-- 뉴스 항목이 피드로 등록됨 -->
-            </div>
-        </section>
-
-        <!-- 3. 랭킹 탭 -->
-        <section id="tab-ranking" class="space-y-4 hide">
-            <h2 class="text-xl font-bold text-gray-800">🏆 실시간 자산 랭킹 대전</h2>
-            <div class="bg-white rounded-xl shadow overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 text-gray-600 text-xs uppercase">
-                            <th class="p-3">순위</th>
-                            <th class="p-3">별명</th>
-                            <th class="p-3 text-right">총자산 (현금+주식)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ranking-tbody" class="text-sm divide-y"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- 4. 게시판 탭 -->
-        <section id="tab-board" class="space-y-4 hide">
-            <h2 class="text-xl font-bold text-gray-800">💬 정보 공유 대전 게시판</h2>
-            <div class="bg-white p-4 rounded-xl shadow space-y-3">
-                <input type="text" id="board-title" placeholder="제목을 입력하세요" class="w-full border p-2 rounded text-sm">
-                <textarea id="board-content" placeholder="내용을 입력하세요" class="w-full border p-2 rounded text-sm h-20 resize-none"></textarea>
-                <button onclick="createPost()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">글 작성하기</button>
-            </div>
-            <div id="post-list" class="space-y-3"></div>
-        </section>
-
-        <!-- 5. 내 지갑 탭 -->
-        <section id="tab-wallet" class="space-y-4 hide">
-            <h2 class="text-xl font-bold text-gray-800">💰 내 지갑 & 송금 대전</h2>
-            <div class="bg-white p-4 rounded-xl shadow space-y-3">
-                <p class="text-gray-500 text-sm">사용 가능 현금</p>
-                <p id="wallet-cash" class="text-3xl font-black text-gray-800">0 원</p>
-                <div class="bg-gray-50 p-3 rounded border text-xs break-all">
-                    <span class="font-bold text-gray-600">내 지갑 주소:</span> <span id="my-wallet-address" class="text-blue-600 font-mono">-</span>
+                <div>
+                  <label class="text-[11px] text-slate-400 block mb-1">수량 입력</label>
+                  <input type="number" id="buy-qty" value="1" min="1" oninput="calculateBuyTotal()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-rose-500">
                 </div>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow space-y-3">
-                <h3 class="font-bold text-gray-700 text-sm">지갑 이체 (송금)</h3>
-                <input type="text" id="transfer-address" placeholder="받는 사람 지갑 주소 입력" class="w-full border p-2 rounded text-sm font-mono">
-                <input type="number" id="transfer-amount" placeholder="보낼 금액 (원)" min="1" class="w-full border p-2 rounded text-sm">
-                <button onclick="sendMoney()" class="w-full bg-emerald-600 text-white py-2 rounded font-bold">송금하기</button>
-            </div>
-            <div class="bg-white p-4 rounded-xl shadow space-y-2">
-                <h4 class="font-bold text-gray-700 text-sm">최근 이체/입금 내역</h4>
-                <div id="transfer-history" class="text-xs space-y-1 text-gray-500">내역이 없습니다.</div>
-            </div>
-        </section>
-
-        <!-- 6. 프로필 탭 -->
-        <section id="tab-profile" class="space-y-4 hide">
-            <h2 class="text-xl font-bold text-gray-800">👤 프로필 & 계정 대전</h2>
-            <div id="profile-logged-out" class="bg-white p-4 rounded-xl shadow space-y-3">
-                <h3 class="font-bold text-gray-700">로그인 / 회원가입</h3>
-                <input type="text" id="auth-id" placeholder="아이디" class="w-full border p-2 rounded text-sm">
-                <input type="text" id="auth-nickname" placeholder="다른 사람들에게 보일 별명" class="w-full border p-2 rounded text-sm">
-                <input type="password" id="auth-pw" placeholder="비밀번호" class="w-full border p-2 rounded text-sm">
-                <input type="password" id="auth-pw-confirm" placeholder="비밀번호 확인" class="w-full border p-2 rounded text-sm">
-                <div class="flex gap-2">
-                    <button onclick="handleLogin()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold">로그인</button>
-                    <button onclick="handleRegister()" class="flex-1 bg-gray-700 text-white py-2 rounded font-bold">회원가입</button>
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                  <span>총 결제금액:</span>
+                  <span id="buy-total-price" class="font-bold text-rose-400 text-sm">0 KRW</span>
                 </div>
+                <button onclick="executeTrade('BUY')" class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm rounded-lg shadow-lg shadow-rose-600/30 transition">
+                  매수하기 (BUY)
+                </button>
+              </div>
+
+              <!-- Sell Panel -->
+              <div class="bg-slate-950/60 p-4 rounded-xl border border-blue-900/30 space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-bold text-blue-400"><i class="fa-solid fa-circle-minus mr-1"></i>매도 주문</span>
+                  <span class="text-slate-400">보유: <b id="sell-available-qty" class="text-white">0</b> 주</span>
+                </div>
+                <div>
+                  <label class="text-[11px] text-slate-400 block mb-1">수량 입력</label>
+                  <input type="number" id="sell-qty" value="1" min="1" oninput="calculateSellTotal()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                  <span>예상 수령액:</span>
+                  <span id="sell-total-price" class="font-bold text-blue-400 text-sm">0 KRW</span>
+                </div>
+                <button onclick="executeTrade('SELL')" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-lg shadow-lg shadow-blue-600/30 transition">
+                  매도하기 (SELL)
+                </button>
+              </div>
             </div>
-            <div id="profile-logged-in" class="bg-white p-4 rounded-xl shadow space-y-3 hide">
-                <h3 class="font-bold text-lg text-blue-600"><span id="profile-name"></span> 님 환영합니다!</h3>
-                <p class="text-sm text-gray-600">아이디: <span id="profile-id-text"></span></p>
-                <button onclick="handleLogout()" class="w-full bg-red-500 text-white py-2 rounded font-bold">로그아웃</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== PORTFOLIO TAB ==================== -->
+    <section id="tab-portfolio" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-2">
+          <span class="text-xs text-slate-400 font-semibold">총 보유 자산</span>
+          <h3 id="pf-total-asset" class="text-2xl font-extrabold text-white">10,000,000 KRW</h3>
+          <p id="pf-profit-rate" class="text-xs font-semibold text-slate-400">수익률 0.00%</p>
+        </div>
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-2">
+          <span class="text-xs text-slate-400 font-semibold">보유 현금</span>
+          <h3 id="pf-cash" class="text-2xl font-extrabold text-emerald-400">10,000,000 KRW</h3>
+          <button onclick="resetAccount()" class="text-[11px] text-slate-500 hover:text-slate-300 underline">자산 초기화 (1,000만원)</button>
+        </div>
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-2">
+          <span class="text-xs text-slate-400 font-semibold">총 주식 평가금액</span>
+          <h3 id="pf-stock-value" class="text-2xl font-extrabold text-blue-400">0 KRW</h3>
+        </div>
+      </div>
+
+      <!-- Holding Asset Table -->
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-4">
+        <h3 class="text-base font-bold text-white flex items-center">
+          <i class="fa-solid fa-list-check text-blue-500 mr-2"></i>보유 종목 현황
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950 text-slate-400 font-semibold uppercase border-b border-slate-800">
+              <tr>
+                <th class="p-3">종목명</th>
+                <th class="p-3">보유 수량</th>
+                <th class="p-3">매수 평균가</th>
+                <th class="p-3">현재가</th>
+                <th class="p-3">평가 금액</th>
+                <th class="p-3">손익 / 수익률</th>
+              </tr>
+            </thead>
+            <tbody id="portfolio-table-body" class="divide-y divide-slate-800">
+              <!-- Dynamic Rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== RANK TAB ==================== -->
+    <section id="tab-rank" class="tab-content hidden space-y-6">
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-trophy text-amber-400 mr-2"></i>실시간 트레이더 자산 랭킹</h3>
+            <p class="text-xs text-slate-400">모든 참여자의 실시간 수익률 리그 표입니다.</p>
+          </div>
+        </div>
+
+        <div class="space-y-3" id="rank-list-container">
+          <!-- Leaderboard Rows -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== COMMUNITY TAB ==================== -->
+    <section id="tab-community" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Post Write Form -->
+        <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4 h-fit">
+          <h3 class="text-base font-bold text-white"><i class="fa-solid fa-pen-to-square text-indigo-400 mr-2"></i>글 작성하기</h3>
+          <div>
+            <input type="text" id="post-author" placeholder="닉네임" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white mb-2">
+            <input type="text" id="post-title" placeholder="제목을 입력하세요" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white mb-2">
+            <textarea id="post-content" rows="4" placeholder="투자 전망이나 종목 후기를 공유하세요!" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none"></textarea>
+          </div>
+          <button onclick="addCommunityPost()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition">게시물 등록</button>
+        </div>
+
+        <!-- Posts List -->
+        <div class="lg:col-span-2 space-y-4" id="community-posts-container">
+          <!-- Dynamic Posts -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== NEWS TAB ==================== -->
+    <section id="tab-news" class="tab-content hidden space-y-6">
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-4">
+        <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-newspaper text-blue-400 mr-2"></i>실시간 속보 타임라인</h3>
+        <div id="news-timeline-container" class="space-y-4">
+          <!-- Dynamic News List -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== ADMIN TAB (Controlled by Auth) ==================== -->
+    <section id="tab-admin" class="tab-content hidden space-y-6">
+      <div class="bg-slate-900 rounded-2xl border border-yellow-500/40 p-6 space-y-6 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div class="flex items-center space-x-3">
+            <div class="p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/30">
+              <i class="fa-solid fa-crown text-yellow-400 text-2xl"></i>
             </div>
-        </section>
+            <div>
+              <h2 class="text-xl font-bold text-white">관리자 전용 속보 발행 센터</h2>
+              <p class="text-xs text-slate-400">원하는 종목(최대 5개)을 선택하여 호재/악재 뉴스를 직접 발행하고 market price 급변을 유발시킵니다.</p>
+            </div>
+          </div>
+        </div>
 
-    </main>
+        <!-- News Generation Form -->
+        <div class="space-y-5">
+          <!-- 1. Stock Selection (Max 5) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-2">
+              대상 종목 선택 (최대 5개 선택 가능)
+            </label>
+            <div id="admin-stock-selector" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-48 overflow-y-auto p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <!-- Dynamic Checkboxes -->
+            </div>
+          </div>
 
-    <!-- 하단 네비게이션 탭 바 -->
-    <nav class="bg-white border-t flex justify-around py-2 fixed bottom-0 left-0 right-0 max-w-[600px] mx-auto z-10 shadow-lg">
-        <button onclick="switchTab('stock')" class="flex flex-col items-center text-blue-600 flex-1 py-1" id="nav-stock">
-            <i class="fa-solid fa-chart-line text-lg"></i><span class="text-[11px] mt-1 font-bold">주식</span>
-        </button>
-        <button onclick="switchTab('news')" class="flex flex-col items-center text-gray-400 flex-1 py-1 relative" id="nav-news">
-            <i class="fa-solid fa-newspaper text-lg"></i><span class="text-[11px] mt-1 font-bold">뉴스</span>
-            <span id="news-badge" class="absolute top-1 right-3 w-2 h-2 bg-red-500 rounded-full hide"></span>
-        </button>
-        <button onclick="switchTab('ranking')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-ranking">
-            <i class="fa-solid fa-trophy text-lg"></i><span class="text-[11px] mt-1 font-bold">랭킹</span>
-        </button>
-        <button onclick="switchTab('board')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-board">
-            <i class="fa-solid fa-comments text-lg"></i><span class="text-[11px] mt-1 font-bold">게시판</span>
-        </button>
-        <button onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-wallet">
-            <i class="fa-solid fa-wallet text-lg"></i><span class="text-[11px] mt-1 font-bold">내지갑</span>
-        </button>
-        <button onclick="switchTab('profile')" class="flex flex-col items-center text-gray-400 flex-1 py-1" id="nav-profile">
-            <i class="fa-solid fa-user text-lg"></i><span class="text-[11px] mt-1 font-bold">프로필</span>
-        </button>
-    </nav>
+          <!-- 2. News Type (Good / Bad) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">뉴스 성격 (호재 / 악재)</label>
+              <select id="admin-news-type" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none">
+                <option value="GOOD">🚀 초대형 호재 (시세 폭등 +10% ~ +25%)</option>
+                <option value="BAD">📉 초대형 악재 (시세 폭락 -10% ~ -25%)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">뉴스 타이틀 (속보 헤드라인)</label>
+              <input type="text" id="admin-news-title" placeholder="예: [속보] 혁신적 신기술 발표로 글로벌 공급 계약 체결" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none">
+            </div>
+          </div>
 
-    <!-- Firebase SDK 초기화 스크립트 -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, onSnapshot, query, orderBy, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+          <!-- 3. News Content -->
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-2">뉴스 상세 본문 설명</label>
+            <textarea id="admin-news-desc" rows="3" placeholder="시장 참여자들의 투자 심리를 흔들 상세 기사 내용을 작성하세요." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-white focus:outline-none"></textarea>
+          </div>
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyBs_iCpQVXHqRu4KMSfBmLwD4kZwUeSvzs",
-          authDomain: "stook-214a2.firebaseapp.com",
-          projectId: "stook-214a2",
-          storageBucket: "stook-214a2.firebasestorage.app",
-          messagingSenderId: "629084155573",
-          appId: "1:629084155573:web:69f07358619eccb50518fc",
-          measurementId: "G-1088J3Y3QF"
-        };
+          <!-- Publish Button -->
+          <button onclick="publishAdminNews()" class="w-full py-3.5 bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition">
+            <i class="fa-solid fa-bullhorn mr-2"></i>시장 속보 전파 및 시세 강제 반영 실행
+          </button>
+        </div>
+      </div>
+    </section>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+  </main>
 
-        window.db = db;
-        window.FB = { collection, doc, setDoc, getDoc, getDocs, updateDoc, arrayUnion, onSnapshot, query, orderBy, addDoc };
-        window.dispatchEvent(new Event('firebase-ready'));
-    </script>
+  <!-- Admin Password Auth Modal -->
+  <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center">
+          <i class="fa-solid fa-lock text-yellow-400 mr-2"></i>관리자 비밀번호 인증
+        </h3>
+        <button onclick="closeAdminAuthModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-400">관리자 권한을 활성화하려면 관리자 전용 비밀번호를 입력해주세요.</p>
+      <div>
+        <input type="password" id="admin-password-input" placeholder="비밀번호 입력..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-yellow-400">
+      </div>
+      <div class="flex space-x-2 pt-2">
+        <button onclick="closeAdminAuthModal()" class="w-1/2 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-lg">취소</button>
+        <button onclick="verifyAdminPassword()" class="w-1/2 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold text-xs rounded-lg">인증하기</button>
+      </div>
+    </div>
+  </div>
 
-    <!-- 앱 핵심 비즈니스 로직 및 뉴스 시스템 구현 -->
-    <script>
-        // 40가지 이상의 확장 종목 목록 구성
-        const stockDataList = [
-            // [종목명, 카테고리, 기준가격]
-            ["삼성전자", "KOR", 73000],
-            ["SK하이닉스", "KOR", 185000],
-            ["LG에너지솔루션", "KOR", 380000],
-            ["현대차", "KOR", 240000],
-            ["POSCO홀딩스", "KOR", 370000],
-            ["NAVER", "KOR", 175000],
-            ["카카오", "KOR", 42000],
-            ["셀트리온", "KOR", 190000],
-            ["기아", "KOR", 115000],
-            ["KB금융", "KOR", 78000],
-            ["삼성바이오로직스", "KOR", 920000],
-            ["한화에어로스페이스", "KOR", 290000],
-            ["신한지주", "KOR", 52000],
-            ["KODEX 200", "KOR", 35000],
-            ["두산에너빌리티", "KOR", 21000],
-            ["에코프로비엠", "KOR", 180000],
-            ["카카오뱅크", "KOR", 22000],
-            
-            ["엔비디아", "USA", 1250000], // 원화 가산 환산가
-            ["애플", "USA", 310000],
-            ["테슬라", "USA", 290000],
-            ["마이크로소프트", "USA", 580000],
-            ["아마존", "USA", 250000],
-            ["알파벳(구글)", "USA", 230000],
-            ["메타 플랫폼스", "USA", 680000],
-            ["넷플릭스", "USA", 850000],
-            ["AMD", "USA", 210000],
-            ["초전도체 퀀텀랩", "USA", 45000],
-            ["인텔", "USA", 35000],
-            ["팔란티어", "USA", 38000],
+  <script>
+    // ==========================================
+    // DATA MODEL & GLOBAL STATE
+    // ==========================================
+    const ADMIN_PASS = "2783!!??wjdwogkr";
+    let isAdminActive = false;
+    let currentCategory = 'ALL';
+    let selectedStockCode = '005930';
+    let chartType = 'line';
+    let marketChart = null;
 
-            ["비트코인", "CRYPTO", 88000000],
-            ["이더리움", "CRYPTO", 4200000],
-            ["리플", "CRYPTO", 850],
-            ["솔라나", "CRYPTO", 210000],
-            ["에이다", "CRYPTO", 550],
-            ["도지코인", "CRYPTO", 180],
-            ["체인링크", "CRYPTO", 19000],
-            ["시바이누", "CRYPTO", 0.03],
-            ["수이", "CRYPTO", 2400],
-            ["아발란체", "CRYPTO", 38000],
-            ["페페코인", "CRYPTO", 0.015]
-        ];
+    // User Financial Wallet State
+    let userWallet = {
+      cash: 10000000,
+      holdings: {
+        '005930': { qty: 10, avgPrice: 72000 }
+      }
+    };
 
-        const stockNames = stockDataList.map(item => item[0]);
-        let selectedCategory = 'ALL';
+    // 40+ Domestic, Overseas, and Crypto Instruments
+    let stocks = [
+      // 국내 주식
+      { code: '005930', name: '삼성전자', category: 'DOMESTIC', price: 74500, history: [73000, 73500, 74000, 74500] },
+      { code: '000660', name: 'SK하이닉스', category: 'DOMESTIC', price: 182000, history: [178000, 180000, 182000] },
+      { code: '035420', name: 'NAVER', category: 'DOMESTIC', price: 195000, history: [192000, 194000, 195000] },
+      { code: '035720', name: '카카오', category: 'DOMESTIC', price: 48500, history: [49000, 48800, 48500] },
+      { code: '005380', name: '현대차', category: 'DOMESTIC', price: 245000, history: [240000, 242000, 245000] },
+      { code: '006400', name: '삼성SDI', category: 'DOMESTIC', price: 390000, history: [385000, 388000, 390000] },
+      { code: '051910', name: 'LG화학', category: 'DOMESTIC', price: 360000, history: [355000, 358000, 360000] },
+      { code: '207940', name: '삼성바이오로직스', category: 'DOMESTIC', price: 810000, history: [805000, 808000, 810000] },
+      { code: '068270', name: '셀트리온', category: 'DOMESTIC', price: 185000, history: [183000, 184000, 185000] },
+      { code: '000270', name: '기아', category: 'DOMESTIC', price: 118000, history: [116000, 117500, 118000] },
+      { code: '010560', name: 'KB금융', category: 'DOMESTIC', price: 78000, history: [77000, 77500, 78000] },
+      { code: '055550', name: '신한지주', category: 'DOMESTIC', price: 46000, history: [45500, 45800, 46000] },
+      { code: '032830', name: '삼성생명', category: 'DOMESTIC', price: 89000, history: [88000, 88500, 89000] },
+      { code: '018260', name: '삼성SDS', category: 'DOMESTIC', price: 152000, history: [150000, 151000, 152000] },
 
-        // 정교한 예측 가능 뉴스 라이브러리 (영향을 주는 종목들 명시)
-        const newsDatabase = [
-            {
-                title: "글로벌 IT 기업들의 AI 반도체 사재기 열풍... 메모리 칩 부족 사태 확산",
-                desc: "빅테크 기업들의 반도체 확보 경쟁으로 RAM 및 HBM 가격이 폭등하고 있습니다.",
-                targetStocks: ["삼성전자", "SK하이닉스", "엔비디아"],
-                impact: 0.08, // +8% 상승 압력
-                type: "BULL"
-            },
-            {
-                title: "미 연준(Fed) 깜짝 기준금리 인하 단행... 자산 시장 폭등세",
-                desc: "금리 인하 소식에 코인 시장 및 성장주 위주로 매수세가 폭발적으로 몰리고 있습니다.",
-                targetStocks: ["비트코인", "이더리움", "솔라나", "테슬라", "NAVER"],
-                impact: 0.07,
-                type: "BULL"
-            },
-            {
-                title: "글로벌 배터리 규제 강화 발표... 이차전지 업계 비상",
-                desc: "유럽연합의 신규 배터리 원자재 법안 타결로 관련 기업들의 수출 차질이 우려됩니다.",
-                targetStocks: ["LG에너지솔루션", "에코프로비엠", "POSCO홀딩스"],
-                impact: -0.06, // -6% 하락 압력
-                type: "BEAR"
-            },
-            {
-                title: "중동 정세 불안 재확산... 원유 및 방산주 급등세",
-                desc: "국제 유가 상승 우려와 지정학적 리스크로 방산 기업들에 수주 폭주가 이어지고 있습니다.",
-                targetStocks: ["한화에어로스페이스", "두산에너빌리티"],
-                impact: 0.09,
-                type: "BULL"
-            },
-            {
-                title: "주요 가상화폐 거래소 해킹 해프닝... 암호화폐 시장 일시적 급락",
-                desc: "해킹 루머가 돌며 가상화폐 대장주들이 순간 폭락했으나 빠르게 회복을 시도 중입니다.",
-                targetStocks: ["비트코인", "이더리움", "리플", "도지코인"],
-                impact: -0.07,
-                type: "BEAR"
-            },
-            {
-                title: "자율주행 5단계 정부 승인 통과... 빅테크 기술주 대호재",
-                desc: "완전 자율주행 상용화 허가 소식에 로보택시 및 소프트웨어 기업 주가가 요동치고 있습니다.",
-                targetStocks: ["테슬라", "엔비디아", "현대차", "알파벳(구글)"],
-                impact: 0.08,
-                type: "BULL"
-            },
-            {
-                title: "상온 초전도체 신물질 재현 성공 발표! 과학계 극찬",
-                desc: "새로운 초전도체 물질 실험 결과가 입증되며 과학/기술 테마주가 폭등하고 있습니다.",
-                targetStocks: ["초전도체 퀀텀랩", "두산에너빌리티"],
-                impact: 0.15, // +15% 초대형 호재
-                type: "BULL"
-            },
-            {
-                title: "국내 대기업 빅데이터/AI 플랫폼 대규모 투자 유치 성공",
-                desc: "국내 대표 IT 기업들이 플랫폼 체질 개선에 성공하며 외국인 순매수가 급증하고 있습니다.",
-                targetStocks: ["NAVER", "카카오", "카카오뱅크"],
-                impact: 0.06,
-                type: "BULL"
-            },
-            {
-                title: "빅테크 실적 발표 '어닝 쇼크'... 마진율 대폭 감소",
-                desc: "글로벌 기술주들의 실적 발표가 시장 기대치를 하회하며 실망 매물이 쏟아지고 있습니다.",
-                targetStocks: ["애플", "마이크로소프트", "아마존", "메타 플랫폼스"],
-                impact: -0.05,
-                type: "BEAR"
-            },
-            {
-                title: "민간 우주항공 발사체 연속 성공... 우주 산업 본격화",
-                desc: "우주 탐사 및 인공위성 통신망 구축 기대감으로 첨단 엔지니어링 기업들이 상승세입니다.",
-                targetStocks: ["한화에어로스페이스", "AMD"],
-                impact: 0.07,
-                type: "BULL"
-            }
-        ];
+      // 해외 주식
+      { code: 'NVDA', name: '엔비디아 (NVIDIA)', category: 'OVERSEAS', price: 165000, history: [160000, 162000, 165000] },
+      { code: 'AAPL', name: '애플 (Apple)', category: 'OVERSEAS', price: 310000, history: [305000, 308000, 310000] },
+      { code: 'TSLA', name: '테슬라 (Tesla)', category: 'OVERSEAS', price: 280000, history: [270000, 275000, 280000] },
+      { code: 'MSFT', name: '마이크로소프트', category: 'OVERSEAS', price: 580000, history: [575000, 578000, 580000] },
+      { code: 'AMZN', name: '아마존', category: 'OVERSEAS', price: 250000, history: [245000, 248000, 250000] },
+      { code: 'GOOGL', name: '알파벳(구글)', category: 'OVERSEAS', price: 230000, history: [225000, 228000, 230000] },
+      { code: 'META', name: '메타 (Meta)', category: 'OVERSEAS', price: 670000, history: [660000, 665000, 670000] },
+      { code: 'AMD', name: 'AMD', category: 'OVERSEAS', price: 210000, history: [205000, 208000, 210000] },
+      { code: 'INTC', name: '인텔', category: 'OVERSEAS', price: 42000, history: [41000, 41500, 42000] },
+      { code: 'PLTR', name: '팔란티어', category: 'OVERSEAS', price: 35000, history: [33000, 34000, 35000] },
+      { code: 'NFLX', name: '넷플릭스', category: 'OVERSEAS', price: 890000, history: [880000, 885000, 890000] },
+      { code: 'COIN', name: '코인베이스', category: 'OVERSEAS', price: 310000, history: [295000, 302000, 310000] },
+      { code: 'DIS', name: '디즈니', category: 'OVERSEAS', price: 140000, history: [138000, 139000, 140000] },
 
-        let stocks = {};
-        let newsHistory = [];
-        let stockMarketImpacts = {}; // 각 종목별 뉴스 호재/악재 영향 잔여분
-        let currentSelectedStock = stockNames[0];
-        let chartType = 'candle'; 
-        let currentUser = localStorage.getItem('sim_current_user') || null;
-        let updateTimer = null;
+      // 가상화폐
+      { code: 'BTC', name: '비트코인 (Bitcoin)', category: 'CRYPTO', price: 92000000, history: [90000000, 91000000, 92000000] },
+      { code: 'ETH', name: '이더리움 (Ethereum)', category: 'CRYPTO', price: 4800000, history: [4700000, 4750000, 4800000] },
+      { code: 'SOL', name: '솔라나 (Solana)', category: 'CRYPTO', price: 210000, history: [200000, 205000, 210000] },
+      { code: 'XRP', name: '리플 (Ripple)', category: 'CRYPTO', price: 820, history: [800, 810, 820] },
+      { code: 'DOGE', name: '도지코인 (Dogecoin)', category: 'CRYPTO', price: 210, history: [200, 205, 210] },
+      { code: 'ADA', name: '에이비다 (Cardano)', category: 'CRYPTO', price: 650, history: [630, 640, 650] },
+      { code: 'AVAX', name: '아발란체', category: 'CRYPTO', price: 45000, history: [44000, 44500, 45000] },
+      { code: 'DOT', name: '폴카닷', category: 'CRYPTO', price: 11000, history: [10500, 10800, 11000] },
+      { code: 'SHIB', name: '시바이누', category: 'CRYPTO', price: 0.035, history: [0.032, 0.033, 0.035] },
+      { code: 'LINK', name: '체인링크', category: 'CRYPTO', price: 22000, history: [21000, 21500, 22000] },
+      { code: 'PEPE', name: '페페코인', category: 'CRYPTO', price: 0.012, history: [0.010, 0.011, 0.012] },
+      { code: 'NEAR', name: '니어프로토콜', category: 'CRYPTO', price: 8500, history: [8200, 8350, 8500] },
+      { code: 'SUI', name: '수이 (SUI)', category: 'CRYPTO', price: 2400, history: [2300, 2350, 2400] }
+    ];
 
-        // 종목 데이터 초기화
-        stockDataList.forEach(([name, cat, basePrice]) => {
-            stocks[name] = { 
-                price: basePrice, 
-                history: Array(20).fill(basePrice),
-                category: cat
-            };
-            stockMarketImpacts[name] = 0;
-        });
+    // Seed initial historical change base
+    stocks.forEach(s => {
+      s.prevPrice = s.history[0];
+      s.openPrice = s.history[0];
+    });
 
-        // HTML 이스케이프
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
+    let newsTimeline = [
+      { id: 1, title: '[개장 속보] 글로벌 증시 환율 안정세 속 기술주 상승 출발', desc: '주요 지수가 상승세를 보이며 가상화폐 시장도 동반 상승 기류를 타고 있습니다.', time: '10분 전', impact: 'GOOD' }
+    ];
+
+    let communityPosts = [
+      { id: 1, author: '버핏의제자', title: '오늘 비트코인 과연 1억 돌파할까요?', content: '차트 흐름이 전형적인 우상향 패넌트형입니다. 성투합시다!', time: '5분 전', likes: 12 },
+      { id: 2, author: '삼성전자존버', title: '삼성전자 반도체 감산 호재 언제 터지냐', content: '관리자님이 속보 하나 터뜨려주셨으면 좋겠네요 ㅠㅠ', time: '12분 전', likes: 8 }
+    ];
+
+    let rankers = [
+      { name: '워렌버핏', asset: 154000000, profit: '+1,440.0%' },
+      { name: '서학개미대장', asset: 89000000, profit: '+790.0%' },
+      { name: '코인왕김떡상', asset: 45000000, profit: '+350.0%' },
+      { name: '나유저 (나)', asset: 10000000, profit: '0.00%' }
+    ];
+
+    window.onload = function() {
+      initChart();
+      renderStockList();
+      updateSelectedStockUI();
+      updateWalletUI();
+      renderNewsTimeline();
+      renderCommunityPosts();
+      renderRankings();
+      renderAdminStockSelector();
+      startMarketSimulator();
+    };
+
+    // TAB SWITCHER LOGIC
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('border-blue-500', 'text-blue-400');
+        el.classList.add('border-transparent', 'text-slate-400');
+      });
+
+      const activeTab = document.getElementById(`tab-${tabId}`);
+      if(activeTab) activeTab.classList.remove('hidden');
+
+      const btn = document.getElementById(`tab-btn-${tabId}`) || document.getElementById(`admin-tab-nav`);
+      if(btn) {
+        btn.classList.add('border-blue-500', 'text-blue-400');
+        btn.classList.remove('border-transparent', 'text-slate-400');
+      }
+
+      if(tabId === 'portfolio') renderPortfolioUI();
+    }
+
+    // CATEGORY FILTER
+    function filterCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('bg-slate-800', 'text-slate-400');
+      });
+      event.target.classList.remove('bg-slate-800', 'text-slate-400');
+      event.target.classList.add('bg-blue-600', 'text-white');
+      renderStockList();
+    }
+
+    // SEARCH FILTER
+    function handleSearch() {
+      renderStockList();
+    }
+
+    // RENDER STOCK LIST
+    function renderStockList() {
+      const container = document.getElementById('stock-list-container');
+      const search = document.getElementById('search-input').value.toLowerCase();
+      
+      const filtered = stocks.filter(s => {
+        const matchCat = (currentCategory === 'ALL' || s.category === currentCategory);
+        const matchSearch = s.name.toLowerCase().includes(search) || s.code.toLowerCase().includes(search);
+        return matchCat && matchSearch;
+      });
+
+      container.innerHTML = '';
+      filtered.forEach(s => {
+        const diff = s.price - s.prevPrice;
+        const rate = ((diff / s.prevPrice) * 100).toFixed(2);
+        const isUp = diff >= 0;
+        const colorClass = isUp ? 'text-rose-500' : 'text-blue-400';
+        const sign = isUp ? '+' : '';
+
+        const item = document.createElement('div');
+        item.className = `flex items-center justify-between p-3 rounded-xl cursor-pointer transition hover:bg-slate-800/60 ${s.code === selectedStockCode ? 'bg-slate-800/90 border-l-4 border-blue-500' : ''}`;
+        item.onclick = () => selectStock(s.code);
+
+        item.innerHTML = `
+          <div>
+            <div class="font-bold text-xs text-white">${s.name}</div>
+            <div class="text-[10px] text-slate-500 font-mono">${s.code} · ${s.category}</div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold text-xs ${colorClass}">${s.price.toLocaleString()} KRW</div>
+            <div class="text-[10px] font-semibold ${colorClass}">${sign}${rate}%</div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // SELECT STOCK
+    function selectStock(code) {
+      selectedStockCode = code;
+      renderStockList();
+      updateSelectedStockUI();
+      updateChartData();
+    }
+
+    // UPDATE SELECTED STOCK UI
+    function updateSelectedStockUI() {
+      const stock = stocks.find(s => s.code === selectedStockCode);
+      if(!stock) return;
+
+      document.getElementById('selected-name').innerText = stock.name;
+      document.getElementById('selected-code').innerText = stock.code;
+      document.getElementById('selected-badge').innerText = stock.category;
+      document.getElementById('selected-price').innerText = `${stock.price.toLocaleString()} KRW`;
+
+      const diff = stock.price - stock.prevPrice;
+      const rate = ((diff / stock.prevPrice) * 100).toFixed(2);
+      const isUp = diff >= 0;
+      const changeEl = document.getElementById('selected-change');
+      changeEl.innerText = `${isUp ? '+' : ''}${rate}%`;
+      changeEl.className = `text-sm font-semibold ${isUp ? 'text-rose-500' : 'text-blue-400'}`;
+
+      // Update Order Inputs
+      const holding = userWallet.holdings[selectedStockCode] ? userWallet.holdings[selectedStockCode].qty : 0;
+      document.getElementById('sell-available-qty').innerText = holding;
+      calculateBuyTotal();
+      calculateSellTotal();
+    }
+
+    // ORDER CALCULATIONS
+    function calculateBuyTotal() {
+      const stock = stocks.find(s => s.code === selectedStockCode);
+      const qty = parseInt(document.getElementById('buy-qty').value) || 0;
+      const total = stock ? stock.price * qty : 0;
+      document.getElementById('buy-total-price').innerText = `${total.toLocaleString()} KRW`;
+    }
+
+    function calculateSellTotal() {
+      const stock = stocks.find(s => s.code === selectedStockCode);
+      const qty = parseInt(document.getElementById('sell-qty').value) || 0;
+      const total = stock ? stock.price * qty : 0;
+      document.getElementById('sell-total-price').innerText = `${total.toLocaleString()} KRW`;
+    }
+
+    // EXECUTE BUY / SELL
+    function executeTrade(type) {
+      const stock = stocks.find(s => s.code === selectedStockCode);
+      if(!stock) return;
+
+      if(type === 'BUY') {
+        const qty = parseInt(document.getElementById('buy-qty').value);
+        if(!qty || qty <= 0) return alert('올바른 매수 수량을 입력하세요.');
+        const cost = stock.price * qty;
+
+        if(userWallet.cash < cost) {
+          showToast('⚠️ 보유 현금이 부족합니다!', 'BAD');
+          return;
         }
 
-        // 탭 전환 Logic
-        function switchTab(tabId) {
-            ['stock', 'news', 'ranking', 'board', 'wallet', 'profile'].forEach(id => {
-                document.getElementById(`tab-${id}`).classList.add('hide');
-                document.getElementById(`nav-${id}`).className = "flex flex-col items-center text-gray-400 flex-1 py-1 relative";
-            });
-            document.getElementById(`tab-${tabId}`).classList.remove('hide');
-            document.getElementById(`nav-${tabId}`).className = "flex flex-col items-center text-blue-600 flex-1 py-1 relative";
+        userWallet.cash -= cost;
+        if(!userWallet.holdings[stock.code]) {
+          userWallet.holdings[stock.code] = { qty: 0, avgPrice: 0 };
+        }
+        const current = userWallet.holdings[stock.code];
+        const newQty = current.qty + qty;
+        const newAvg = ((current.qty * current.avgPrice) + cost) / newQty;
+        
+        userWallet.holdings[stock.code] = { qty: newQty, avgPrice: newAvg };
+        showToast(`✅ ${stock.name} ${qty}주 매수 완료!`, 'GOOD');
 
-            if (tabId === 'news') {
-                document.getElementById('news-badge').classList.add('hide');
-                renderNewsFeed();
-            }
-            if (tabId === 'ranking') loadRankingData();
-            if (tabId === 'board') loadBoardData();
-            if (tabId === 'wallet') updateWalletUI();
-            if (tabId === 'stock') setTimeout(updateStockView, 50);
+      } else {
+        const qty = parseInt(document.getElementById('sell-qty').value);
+        if(!qty || qty <= 0) return alert('올바른 매도 수량을 입력하세요.');
+        const current = userWallet.holdings[stock.code];
+
+        if(!current || current.qty < qty) {
+          showToast('⚠️ 보유 수량이 부족합니다!', 'BAD');
+          return;
         }
 
-        // 카테고리 필터링
-        function filterStockCategory(cat) {
-            selectedCategory = cat;
-            const buttons = document.querySelectorAll('#stock-category-filter .cat-btn');
-            buttons.forEach(btn => {
-                if ((cat === 'ALL' && btn.innerText.includes('전체')) ||
-                    (cat === 'KOR' && btn.innerText.includes('국내')) ||
-                    (cat === 'USA' && btn.innerText.includes('해외')) ||
-                    (cat === 'CRYPTO' && btn.innerText.includes('가상'))) {
-                    btn.className = "cat-btn px-3 py-1 bg-blue-600 text-white rounded-full text-xs font-bold whitespace-nowrap";
-                } else {
-                    btn.className = "cat-btn px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-bold whitespace-nowrap";
-                }
-            });
-            renderStockButtons();
+        const proceed = stock.price * qty;
+        userWallet.cash += proceed;
+        current.qty -= qty;
+        if(current.qty === 0) delete userWallet.holdings[stock.code];
+
+        showToast(`🎉 ${stock.name} ${qty}주 매도 완료! (+${proceed.toLocaleString()} KRW)`, 'GOOD');
+      }
+
+      updateWalletUI();
+      updateSelectedStockUI();
+    }
+
+    // WALLET UI REFRESH
+    function updateWalletUI() {
+      let totalStockVal = 0;
+      Object.keys(userWallet.holdings).forEach(code => {
+        const h = userWallet.holdings[code];
+        const s = stocks.find(x => x.code === code);
+        if(s) totalStockVal += s.price * h.qty;
+      });
+
+      const totalAsset = userWallet.cash + totalStockVal;
+      document.getElementById('header-cash').innerText = `${userWallet.cash.toLocaleString()} KRW`;
+      document.getElementById('header-total-asset').innerText = `${totalAsset.toLocaleString()} KRW`;
+      document.getElementById('buy-available-cash').innerText = userWallet.cash.toLocaleString();
+    }
+
+    // PORTFOLIO TAB UI
+    function renderPortfolioUI() {
+      let totalStockVal = 0;
+      let totalCost = 0;
+
+      const tbody = document.getElementById('portfolio-table-body');
+      tbody.innerHTML = '';
+
+      Object.keys(userWallet.holdings).forEach(code => {
+        const h = userWallet.holdings[code];
+        const s = stocks.find(x => x.code === code);
+        if(!s || h.qty <= 0) return;
+
+        const evalVal = s.price * h.qty;
+        const costVal = h.avgPrice * h.qty;
+        const profit = evalVal - costVal;
+        const rate = ((profit / costVal) * 100).toFixed(2);
+        const isUp = profit >= 0;
+
+        totalStockVal += evalVal;
+        totalCost += costVal;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/50";
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-white">${s.name} <span class="text-[10px] text-slate-500 font-mono">${s.code}</span></td>
+          <td class="p-3 font-medium text-slate-300">${h.qty}주</td>
+          <td class="p-3 text-slate-400">${Math.round(h.avgPrice).toLocaleString()} KRW</td>
+          <td class="p-3 font-semibold text-slate-200">${s.price.toLocaleString()} KRW</td>
+          <td class="p-3 font-bold text-white">${evalVal.toLocaleString()} KRW</td>
+          <td class="p-3 font-bold ${isUp ? 'text-rose-500' : 'text-blue-400'}">${isUp ? '+' : ''}${profit.toLocaleString()} KRW (${isUp ? '+' : ''}${rate}%)</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const totalAsset = userWallet.cash + totalStockVal;
+      const totalProfit = totalAsset - 10000000;
+      const totalRate = ((totalProfit / 10000000) * 100).toFixed(2);
+
+      document.getElementById('pf-total-asset').innerText = `${totalAsset.toLocaleString()} KRW`;
+      document.getElementById('pf-cash').innerText = `${userWallet.cash.toLocaleString()} KRW`;
+      document.getElementById('pf-stock-value').innerText = `${totalStockVal.toLocaleString()} KRW`;
+      
+      const profitRateEl = document.getElementById('pf-profit-rate');
+      profitRateEl.innerText = `총 수익: ${totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString()} KRW (${totalProfit >= 0 ? '+' : ''}${totalRate}%)`;
+      profitRateEl.className = `text-xs font-semibold ${totalProfit >= 0 ? 'text-rose-400' : 'text-blue-400'}`;
+    }
+
+    function resetAccount() {
+      userWallet = { cash: 10000000, holdings: {} };
+      updateWalletUI();
+      renderPortfolioUI();
+      showToast('🔄 자산이 1,000만원으로 초기화되었습니다.', 'GOOD');
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('marketChart').getContext('2d');
+      const stock = stocks.find(s => s.code === selectedStockCode);
+
+      marketChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['10분 전', '5분 전', '3분 전', '현재'],
+          datasets: [{
+            label: '주가 추이',
+            data: stock ? stock.history : [70000, 71000, 72000, 74500],
+            borderColor: '#f43f5e',
+            backgroundColor: 'rgba(244, 63, 94, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    function updateChartData() {
+      if(!marketChart) return;
+      const stock = stocks.find(s => s.code === selectedStockCode);
+      if(!stock) return;
+
+      const isUp = stock.price >= stock.prevPrice;
+      const color = isUp ? '#f43f5e' : '#60a5fa';
+
+      marketChart.config.type = chartType === 'bar' ? 'bar' : 'line';
+      marketChart.data.labels = stock.history.map((_, i) => `${i + 1}회차`);
+      marketChart.data.datasets[0].data = stock.history;
+      marketChart.data.datasets[0].borderColor = color;
+      marketChart.data.datasets[0].backgroundColor = isUp ? 'rgba(244, 63, 94, 0.15)' : 'rgba(96, 165, 250, 0.15)';
+      marketChart.update();
+    }
+
+    function setChartType(type) {
+      chartType = type;
+      document.getElementById('chart-type-line').className = `px-3 py-1 text-xs font-bold rounded ${type === 'line' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`;
+      document.getElementById('chart-type-bar').className = `px-3 py-1 text-xs font-bold rounded ${type === 'bar' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`;
+      updateChartData();
+    }
+
+    function startMarketSimulator() {
+      function tick() {
+        // Randomly pick 3-7 stocks to fluctuate each interval
+        const sampleCount = Math.floor(Math.random() * 5) + 3;
+        for(let i = 0; i < sampleCount; i++) {
+          const idx = Math.floor(Math.random() * stocks.length);
+          const stock = stocks[idx];
+          
+          // Random change between -2.5% and +2.5%
+          const pct = (Math.random() * 5 - 2.45) / 100;
+          let newPrice = Math.round(stock.price * (1 + pct));
+          if(newPrice < 1) newPrice = 1;
+
+          stock.price = newPrice;
+          stock.history.push(newPrice);
+          if(stock.history.length > 20) stock.history.shift();
         }
 
-        // 종목 버튼 리스트 생성
-        function renderStockButtons() {
-            const container = document.getElementById('stock-list-container');
-            container.innerHTML = '';
-            
-            stockDataList.forEach(([name, cat]) => {
-                if (selectedCategory !== 'ALL' && selectedCategory !== cat) return;
+        renderStockList();
+        updateSelectedStockUI();
+        updateChartData();
+        updateWalletUI();
 
-                let btn = document.createElement('button');
-                btn.className = `px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap shadow-sm transition ${currentSelectedStock === name ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border'}`;
-                
-                // 가격 변동 아이콘 표기
-                let st = stocks[name];
-                let changeStr = '';
-                if (st && st.history.length > 1) {
-                    let prev = st.history[st.history.length - 2];
-                    let diff = st.price - prev;
-                    if (diff > 0) changeStr = ' 🔺';
-                    else if (diff < 0) changeStr = ' 🔻';
-                }
+        // Next random tick interval (1 to 5 seconds)
+        const nextTime = Math.floor(Math.random() * 4000) + 1000;
+        setTimeout(tick, nextTime);
+      }
+      tick();
+    }
 
-                btn.innerText = name + changeStr;
-                btn.onclick = () => {
-                    currentSelectedStock = name;
-                    renderStockButtons();
-                    updateStockView();
-                };
-                container.appendChild(btn);
-            });
+    function showToast(msg, type = 'GOOD') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const isGood = type === 'GOOD';
+      toast.className = `toast-anim mb-3 p-4 rounded-xl border shadow-2xl backdrop-blur-md flex items-center justify-between ${
+        isGood 
+          ? 'bg-emerald-950/90 border-emerald-500 text-emerald-100' 
+          : 'bg-rose-950/90 border-rose-500 text-rose-100'
+      }`;
+
+      toast.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <i class="fa-solid ${isGood ? 'fa-bolt text-emerald-400' : 'fa-triangle-exclamation text-rose-400'} text-lg"></i>
+          <span class="text-xs sm:text-sm font-bold">${msg}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white text-xs ml-4"><i class="fa-solid fa-xmark"></i></button>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 5000);
+    }
+
+    function openAdminAuthModal() {
+      if(isAdminActive) {
+        switchTab('admin');
+        return;
+      }
+      document.getElementById('admin-modal').classList.remove('hidden');
+    }
+
+    function closeAdminAuthModal() {
+      document.getElementById('admin-modal').classList.add('hidden');
+    }
+
+    function verifyAdminPassword() {
+      const pwd = document.getElementById('admin-password-input').value;
+      if(pwd === ADMIN_PASS) {
+        isAdminActive = true;
+        closeAdminAuthModal();
+        document.getElementById('admin-tab-nav').classList.remove('hidden');
+        switchTab('admin');
+        showToast('👑 관리자 모드가 성공적으로 인증되었습니다!', 'GOOD');
+      } else {
+        alert('비밀번호가 일치하지 않습니다.');
+      }
+    }
+
+    function renderAdminStockSelector() {
+      const container = document.getElementById('admin-stock-selector');
+      container.innerHTML = '';
+      stocks.forEach(s => {
+        const label = document.createElement('label');
+        label.className = "flex items-center space-x-2 bg-slate-900 p-2 rounded-lg text-xs cursor-pointer hover:bg-slate-800 border border-slate-800";
+        label.innerHTML = `
+          <input type="checkbox" value="${s.code}" class="admin-stock-check rounded bg-slate-950 border-slate-700 text-yellow-500 focus:ring-0">
+          <span class="truncate text-slate-200 font-semibold">${s.name}</span>
+        `;
+        container.appendChild(label);
+      });
+    }
+
+    function publishAdminNews() {
+      const checkedBoxes = document.querySelectorAll('.admin-stock-check:checked');
+      if(checkedBoxes.length === 0) {
+        alert('뉴스를 적용할 종목을 최소 1개 선택해 주세요.');
+        return;
+      }
+      if(checkedBoxes.length > 5) {
+        alert('종목은 최대 5개까지만 선택할 수 있습니다.');
+        return;
+      }
+
+      const newsType = document.getElementById('admin-news-type').value;
+      const title = document.getElementById('admin-news-title').value.trim();
+      const desc = document.getElementById('admin-news-desc').value.trim();
+
+      if(!title || !desc) {
+        alert('뉴스 제목과 내용을 모두 입력해 주세요.');
+        return;
+      }
+
+      const affectedCodes = Array.from(checkedBoxes).map(cb => cb.value);
+      const isGood = newsType === 'GOOD';
+
+      // Fluctuate market prices for selected stocks by ±10% to 25%
+      affectedCodes.forEach(code => {
+        const stock = stocks.find(s => s.code === code);
+        if(stock) {
+          const factor = (Math.random() * 0.15 + 0.10) * (isGood ? 1 : -1);
+          stock.price = Math.round(stock.price * (1 + factor));
+          stock.history.push(stock.price);
         }
-
-        function setChartType(type) {
-            chartType = type;
-            document.getElementById('btn-line').className = type === 'line' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
-            document.getElementById('btn-candle').className = type === 'candle' ? "px-3 py-1 text-xs bg-blue-600 text-white rounded" : "px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded";
-            updateStockView();
-        }
-
-        function drawCustomChart() {
-            const canvas = document.getElementById('stockCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            let st = stocks[currentSelectedStock];
-            if (!st || !st.history || st.history.length === 0) return;
-            let history = st.history;
-
-            let minVal = Math.min(...history);
-            let maxVal = Math.max(...history);
-            if (minVal === maxVal) { minVal *= 0.99; maxVal *= 1.01; }
-            let padding = (maxVal - minVal) * 0.1;
-            minVal -= padding;
-            maxVal += padding;
-
-            let getX = (i) => (i / (Math.max(history.length - 1, 1))) * (canvas.width - 40) + 20;
-            let getY = (val) => canvas.height - 20 - ((val - minVal) / (maxVal - minVal)) * (canvas.height - 40);
-
-            if (chartType === 'line') {
-                ctx.beginPath();
-                ctx.strokeStyle = '#2563eb';
-                ctx.lineWidth = 2.5;
-                for (let i = 0; i < history.length; i++) {
-                    let x = getX(i);
-                    let y = getY(history[i]);
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-
-                // 영역 그라데이션 채우기
-                ctx.lineTo(getX(history.length - 1), canvas.height);
-                ctx.lineTo(getX(0), canvas.height);
-                ctx.closePath();
-                let grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-                grad.addColorStop(0, 'rgba(37, 99, 235, 0.25)');
-                grad.addColorStop(1, 'rgba(37, 99, 235, 0)');
-                ctx.fillStyle = grad;
-                ctx.fill();
-
-            } else {
-                let barWidth = Math.max((canvas.width / history.length) * 0.55, 3);
-                for (let i = 0; i < history.length; i++) {
-                    let close = history[i];
-                    let open = i === 0 ? close : history[i - 1];
-                    let high = Math.max(open, close) * (1 + Math.random() * 0.002);
-                    let low = Math.min(open, close) * (1 - Math.random() * 0.002);
-
-                    let x = getX(i);
-                    let yHigh = getY(high);
-                    let yLow = getY(low);
-                    let yOpen = getY(open);
-                    let yClose = getY(close);
-
-                    let isUp = close >= open;
-                    let color = isUp ? '#ef4444' : '#3b82f6';
-
-                    ctx.strokeStyle = color;
-                    ctx.fillStyle = color;
-                    ctx.lineWidth = 1.5;
-
-                    ctx.beginPath();
-                    ctx.moveTo(x, yHigh);
-                    ctx.lineTo(x, yLow);
-                    ctx.stroke();
-
-                    let topBody = Math.min(yOpen, yClose);
-                    let bodyHeight = Math.max(Math.abs(yOpen - yClose), 2);
-                    ctx.fillRect(x - barWidth / 2, topBody, barWidth, bodyHeight);
-                }
-            }
-        }
-
-        function updateStockView() {
-            document.getElementById('selected-stock-name').innerText = currentSelectedStock;
-            if (stocks[currentSelectedStock]) {
-                let st = stocks[currentSelectedStock];
-                let priceFormatted = st.price >= 1000 ? st.price.toLocaleString() : st.price.toFixed(2);
-                document.getElementById('selected-stock-price').innerText = priceFormatted + " 원";
-                
-                // 뉴스 영항 표시
-                let imp = stockMarketImpacts[currentSelectedStock] || 0;
-                let impEl = document.getElementById('selected-stock-impact');
-                if (imp > 0) {
-                    impEl.className = "text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600";
-                    impEl.innerText = "뉴스 호재 중 📈";
-                } else if (imp < 0) {
-                    impEl.className = "text-xs font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-600";
-                    impEl.innerText = "뉴스 악재 중 📉";
-                } else {
-                    impEl.className = "text-xs font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600";
-                    impEl.innerText = "안정적";
-                }
-
-                drawCustomChart();
-            }
-            loadUserPortfolio();
-        }
-
-        // 뉴스 토스트 알림 띄우기
-        function triggerNewsToast(newsItem) {
-            const toast = document.getElementById('toast-notification');
-            const titleEl = document.getElementById('toast-title');
-            const descEl = document.getElementById('toast-desc');
-            const tagEl = document.getElementById('toast-tag');
-            const iconBg = document.getElementById('toast-icon-bg');
-
-            titleEl.innerText = newsItem.title;
-            descEl.innerText = newsItem.desc;
-
-            if (newsItem.type === "BULL") {
-                tagEl.innerText = "호재 속보";
-                tagEl.className = "text-[10px] uppercase font-extrabold bg-red-500 text-white px-1.5 py-0.5 rounded";
-                iconBg.className = "bg-red-500/20 p-2 rounded-lg text-red-400 shrink-0 mt-0.5";
-            } else {
-                tagEl.innerText = "악재 속보";
-                tagEl.className = "text-[10px] uppercase font-extrabold bg-blue-500 text-white px-1.5 py-0.5 rounded";
-                iconBg.className = "bg-blue-500/20 p-2 rounded-lg text-blue-400 shrink-0 mt-0.5";
-            }
-
-            toast.classList.remove('hide');
-            toast.classList.add('toast-animate');
-
-            // 배지 활성화
-            document.getElementById('news-badge').classList.remove('hide');
-
-            // 5초 후 자동 닫기
-            setTimeout(() => {
-                closeToast();
-            }, 5500);
-        }
-
-        function closeToast() {
-            const toast = document.getElementById('toast-notification');
-            toast.classList.add('hide');
-        }
-
-        // 뉴스 피드 그리기
-        function renderNewsFeed() {
-            const feed = document.getElementById('news-feed');
-            if (newsHistory.length === 0) {
-                feed.innerHTML = `<div class="bg-white p-6 rounded-xl shadow text-center text-gray-400 text-sm">등록된 최신 뉴스가 없습니다. 잠시만 기다려주세요.</div>`;
-                return;
-            }
-
-            feed.innerHTML = '';
-            newsHistory.forEach(news => {
-                let card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-xl shadow space-y-2 border-l-4 " + (news.type === 'BULL' ? 'border-red-500' : 'border-blue-500');
-                
-                let targetTags = news.targetStocks.map(s => `<span class="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[11px] font-bold">#${s}</span>`).join(' ');
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-center text-xs text-gray-400">
-                        <span class="font-bold ${news.type === 'BULL' ? 'text-red-500' : 'text-blue-500'}">[${news.type === 'BULL' ? '호재' : '악재'}]</span>
-                        <span>${news.timeStr}</span>
-                    </div>
-                    <h3 class="font-bold text-gray-800 text-sm">${escapeHtml(news.title)}</h3>
-                    <p class="text-xs text-gray-600 leading-relaxed">${escapeHtml(news.desc)}</p>
-                    <div class="pt-1 flex flex-wrap gap-1">
-                        ${targetTags}
-                    </div>
-                `;
-                feed.appendChild(card);
-            });
-        }
-
-        // 마켓 스케줄러 (1~5초 무작위 간격 변동 & 확률적 뉴스 생성)
-        async function scheduleNextMarketUpdate() {
-            // 뉴스 발생 확률 (약 15% 확률)
-            if (Math.random() < 0.15) {
-                let randomNews = newsDatabase[Math.floor(Math.random() * newsDatabase.length)];
-                let now = new Date();
-                let timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-
-                let newsItem = { ...randomNews, timeStr: timeStr };
-                newsHistory.unshift(newsItem);
-                if (newsHistory.length > 30) newsHistory.pop();
-
-                // 영향도가 종목에 반영되도록 설정
-                newsItem.targetStocks.forEach(stName => {
-                    stockMarketImpacts[stName] = newsItem.impact;
-                });
-
-                triggerNewsToast(newsItem);
-            }
-
-            // 시세 변동 계산 및 Firestore 동기화
-            const marketRef = window.FB.doc(window.db, "market", "prices");
-            const currentSnap = await window.FB.getDoc(marketRef);
-
-            if (currentSnap.exists()) {
-                let currentData = currentSnap.data();
-                let updated = false;
-
-                stockNames.forEach(name => {
-                    if (currentData[name]) {
-                        let st = currentData[name];
-                        
-                        // 뉴스 영향분 가산
-                        let newsBias = stockMarketImpacts[name] || 0;
-                        // 점점 영향을 소쇄시킴
-                        stockMarketImpacts[name] *= 0.7;
-
-                        // 랜덤 변동률 (-2% ~ +2% + 뉴스 편향)
-                        let randomRatio = (Math.random() - 0.49) * 0.04 + newsBias;
-                        let fluctuation = st.price * randomRatio;
-
-                        st.price = Math.max(1, Math.floor(st.price + fluctuation));
-                        
-                        if (!Array.isArray(st.history)) st.history = [];
-                        st.history.push(st.price);
-                        if (st.history.length > 25) st.history.shift();
-                        
-                        updated = true;
-                    }
-                });
-
-                if (updated) {
-                    await window.FB.setDoc(marketRef, currentData);
-                }
-            }
-
-            // 1000ms(1초) ~ 5000ms(5초) 사이의 무작위 간격으로 다음 업데이트 예약
-            let nextDelay = Math.floor(Math.random() * 4000) + 1000;
-            setTimeout(scheduleNextMarketUpdate, nextDelay);
-        }
-
-        async function initMarketSync() {
-            const marketRef = window.FB.doc(window.db, "market", "prices");
-            const marketSnap = await window.FB.getDoc(marketRef);
-
-            if (!marketSnap.exists()) {
-                let initialMarketData = {};
-                stockDataList.forEach(([name, cat, basePrice]) => {
-                    initialMarketData[name] = {
-                        price: basePrice,
-                        history: Array(20).fill(basePrice),
-                        category: cat
-                    };
-                });
-                await window.FB.setDoc(marketRef, initialMarketData);
-            }
-
-            window.FB.onSnapshot(marketRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    let data = docSnap.data();
-                    stockNames.forEach(name => {
-                        if (data[name]) stocks[name] = data[name];
-                    });
-                    updateStockView();
-                    renderStockButtons();
-                }
-            });
-
-            // 1~5초 랜덤 주기 업데이트 로직 개시
-            scheduleNextMarketUpdate();
-        }
-
-        async function getClientIP() {
-            try {
-                let res = await fetch('https://api.ipify.org?format=json');
-                let data = await res.json();
-                return data.ip;
-            } catch (e) {
-                return 'unknown_ip';
-            }
-        }
-
-        window.addEventListener('firebase-ready', () => {
-            initMarketSync();
-            updateProfileUI();
-            loadRankingData();
-            loadBoardData();
-        });
-
-        async function handleRegister() {
-            let id = document.getElementById('auth-id').value.trim();
-            let nick = document.getElementById('auth-nickname').value.trim();
-            let pw = document.getElementById('auth-pw').value;
-            let pwConfirm = document.getElementById('auth-pw-confirm').value;
-
-            if (!id || !nick || !pw) { alert('모든 항목을 입력해주세요.'); return; }
-            if (pw !== pwConfirm) { alert('비밀번호가 일치하지 않습니다.'); return; }
-
-            const userRef = window.FB.doc(window.db, "users", id);
-            const userSnap = await window.FB.getDoc(userRef);
-            if (userSnap.exists()) { alert('이미 존재하는 아이디입니다.'); return; }
-
-            let clientIp = await getClientIP();
-            const querySnapshot = await window.FB.getDocs(window.FB.collection(window.db, "users"));
-            let nickExists = false;
-            let ipExists = false;
-
-            querySnapshot.forEach((docSnap) => {
-                let data = docSnap.data();
-                if (data.nickname === nick) nickExists = true;
-                if (data.ip === clientIp && clientIp !== 'unknown_ip') ipExists = true;
-            });
-
-            if (nickExists) { alert('이미 사용 중인 별명입니다.'); return; }
-            if (ipExists) { alert('동일한 네트워크(IP)에서 이미 계정을 생성하셨습니다!'); return; }
-
-            let newUser = {
-                id: id,
-                nickname: nick,
-                password: pw,
-                cash: 1000000,
-                walletAddress: '0x' + Math.random().toString(16).substring(2, 12),
-                ip: clientIp,
-                portfolio: {}
-            };
-
-            await window.FB.setDoc(userRef, newUser);
-            alert('회원가입 성공! 로그인해주세요.');
-        }
-
-        async function handleLogin() {
-            let id = document.getElementById('auth-id').value.trim();
-            let pw = document.getElementById('auth-pw').value;
-
-            const userRef = window.FB.doc(window.db, "users", id);
-            const userSnap = await window.FB.getDoc(userRef);
-
-            if (!userSnap.exists() || userSnap.data().password !== pw) {
-                alert('아이디 또는 비밀번호가 틀렸습니다.');
-                return;
-            }
-
-            currentUser = id;
-            localStorage.setItem('sim_current_user', id);
-            updateProfileUI();
-            alert(`${userSnap.data().nickname}님 환영합니다!`);
-        }
-
-        function handleLogout() {
-            currentUser = null;
-            localStorage.removeItem('sim_current_user');
-            updateProfileUI();
-        }
-
-        async function updateProfileUI() {
-            if (!currentUser) {
-                document.getElementById('profile-logged-out').classList.remove('hide');
-                document.getElementById('profile-logged-in').classList.add('hide');
-                document.getElementById('header-user').innerText = "로그인 필요";
-                loadUserPortfolio();
-                return;
-            }
-
-            const userRef = window.FB.doc(window.db, "users", currentUser);
-            const userSnap = await window.FB.getDoc(userRef);
-            if (userSnap.exists()) {
-                let u = userSnap.data();
-                document.getElementById('profile-logged-out').classList.add('hide');
-                document.getElementById('profile-logged-in').classList.remove('hide');
-                document.getElementById('profile-name').innerText = u.nickname;
-                document.getElementById('profile-id-text').innerText = currentUser;
-                document.getElementById('header-user').innerText = u.nickname;
-            }
-            loadUserPortfolio();
-            updateWalletUI();
-        }
-
-        async function executeTrade(type) {
-            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
-            let qty = parseInt(document.getElementById('trade-amount').value);
-            if (isNaN(qty) || qty <= 0) { alert('올바른 수량을 입력하세요.'); return; }
-
-            if (!stocks[currentSelectedStock]) { alert('시장 데이터를 불러오는 중입니다.'); return; }
-            let price = stocks[currentSelectedStock].price;
-            let totalCost = price * qty;
-
-            const userRef = window.FB.doc(window.db, "users", currentUser);
-            const userSnap = await window.FB.getDoc(userRef);
-            let u = userSnap.data();
-
-            if (!u.portfolio) u.portfolio = {};
-
-            if (type === 'buy') {
-                if (u.cash < totalCost) { alert('현금이 부족합니다!'); return; }
-                u.cash -= totalCost;
-                u.portfolio[currentSelectedStock] = (u.portfolio[currentSelectedStock] || 0) + qty;
-                alert(`${currentSelectedStock} ${qty}주 매수 완료!`);
-            } else {
-                if (!u.portfolio[currentSelectedStock] || u.portfolio[currentSelectedStock] < qty) {
-                    alert('보유 중인 수량이 부족합니다!'); return;
-                }
-                u.portfolio[currentSelectedStock] -= qty;
-                u.cash += totalCost;
-                alert(`${currentSelectedStock} ${qty}주 매도 완료!`);
-            }
-
-            await window.FB.updateDoc(userRef, { cash: u.cash, portfolio: u.portfolio });
-            updateStockView();
-            updateWalletUI();
-        }
-
-        async function loadUserPortfolio() {
-            let container = document.getElementById('portfolio-list');
-            if (!currentUser) { container.innerText = "로그인 후 확인 가능합니다."; return; }
-
-            const userRef = window.FB.doc(window.db, "users", currentUser);
-            const userSnap = await window.FB.getDoc(userRef);
-            if (!userSnap.exists()) return;
-
-            let u = userSnap.data();
-            container.innerHTML = '';
-
-            if (!u.portfolio || Object.keys(u.portfolio).length === 0) {
-                container.innerText = "보유 중인 주식이 없습니다.";
-                return;
-            }
-
-            let hasItem = false;
-            for (let [stock, qty] of Object.entries(u.portfolio)) {
-                if (qty > 0 && stocks[stock]) {
-                    hasItem = true;
-                    let val = qty * stocks[stock].price;
-                    let valStr = val >= 1000 ? val.toLocaleString() : val.toFixed(2);
-
-                    let div = document.createElement('div');
-                    div.className = "flex justify-between border-b py-1.5 text-xs items-center";
-                    div.innerHTML = `<span><b>${escapeHtml(stock)}</b>: ${qty}주</span><span class="font-bold text-gray-800">평가액: ${valStr}원</span>`;
-                    container.appendChild(div);
-                }
-            }
-
-            if (!hasItem) {
-                container.innerText = "보유 중인 주식이 없습니다.";
-            }
-        }
-
-        async function loadRankingData() {
-            let tbody = document.getElementById('ranking-tbody');
-            tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400">불러오는 중...</td></tr>';
-
-            const querySnapshot = await window.FB.getDocs(window.FB.collection(window.db, "users"));
-            let rankList = [];
-
-            querySnapshot.forEach((doc) => {
-                let u = doc.data();
-                let totalAsset = u.cash;
-                if (u.portfolio) {
-                    for (let [stName, qty] of Object.entries(u.portfolio)) {
-                        totalAsset += qty * (stocks[stName] ? stocks[stName].price : 0);
-                    }
-                }
-                rankList.push({ nickname: u.nickname, asset: totalAsset });
-            });
-
-            rankList.sort((a, b) => b.asset - a.asset);
-            tbody.innerHTML = '';
-
-            rankList.forEach((r, idx) => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `<td class="p-3 font-bold">${idx + 1}위</td><td class="p-3">${escapeHtml(r.nickname)}</td><td class="p-3 text-right font-bold text-blue-600">${Math.floor(r.asset).toLocaleString()} 원</td>`;
-                tbody.appendChild(tr);
-            });
-
-            if (rankList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-400">등록된 유저가 없습니다.</td></tr>`;
-            }
-        }
-
-        async function updateWalletUI() {
-            if (!currentUser) {
-                document.getElementById('wallet-cash').innerText = "로그인 필요";
-                document.getElementById('my-wallet-address').innerText = "-";
-                return;
-            }
-            const userRef = window.FB.doc(window.db, "users", currentUser);
-            const userSnap = await window.FB.getDoc(userRef);
-            if (!userSnap.exists()) return;
-
-            let u = userSnap.data();
-            document.getElementById('wallet-cash').innerText = Math.floor(u.cash).toLocaleString() + " 원";
-            document.getElementById('my-wallet-address').innerText = u.walletAddress;
-
-            const q = window.FB.query(window.FB.collection(window.db, "transfers"), window.FB.orderBy("time", "desc"));
-            const querySnapshot = await window.FB.getDocs(q);
-            let historyContainer = document.getElementById('transfer-history');
-            historyContainer.innerHTML = '';
-            let count = 0;
-
-            querySnapshot.forEach((doc) => {
-                let t = doc.data();
-                if (t.from === u.walletAddress || t.to === u.walletAddress) {
-                    count++;
-                    let isSend = t.from === u.walletAddress;
-                    let div = document.createElement('div');
-                    div.className = `p-1 rounded ${isSend ? 'text-red-500' : 'text-blue-500'}`;
-                    div.innerText = isSend ? `[송금] ${t.amount.toLocaleString()}원 보냄` : `[입금] ${t.amount.toLocaleString()}원 받음`;
-                    historyContainer.appendChild(div);
-                }
-            });
-
-            if (count === 0) historyContainer.innerText = "내역이 없습니다.";
-        }
-
-        async function sendMoney() {
-            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
-            let targetAddr = document.getElementById('transfer-address').value.trim();
-            let amount = parseInt(document.getElementById('transfer-amount').value);
-
-            if (isNaN(amount) || amount <= 0) { alert('올바른 금액을 입력하세요.'); return; }
-
-            const senderRef = window.FB.doc(window.db, "users", currentUser);
-            const senderSnap = await window.FB.getDoc(senderRef);
-            let sender = senderSnap.data();
-
-            if (sender.cash < amount) { alert('보낼 수 있는 현금이 부족합니다!'); return; }
-
-            const querySnapshot = await window.FB.getDocs(window.FB.collection(window.db, "users"));
-            let receiverId = null;
-            let receiverRef = null;
-            let receiverData = null;
-
-            querySnapshot.forEach((docSnap) => {
-                let data = docSnap.data();
-                if (data.walletAddress === targetAddr) {
-                    receiverId = docSnap.id;
-                    receiverRef = window.FB.doc(window.db, "users", receiverId);
-                    receiverData = data;
-                }
-            });
-
-            if (!receiverId) { alert('존재하지 않는 지갑 주소입니다.'); return; }
-            if (receiverId === currentUser) { alert('자기 자신에게는 송금할 수 없습니다.'); return; }
-
-            sender.cash -= amount;
-            receiverData.cash += amount;
-
-            await window.FB.updateDoc(senderRef, { cash: sender.cash });
-            await window.FB.updateDoc(receiverRef, { cash: receiverData.cash });
-
-            await window.FB.addDoc(window.FB.collection(window.db, "transfers"), {
-                from: sender.walletAddress,
-                to: targetAddr,
-                amount: amount,
-                time: Date.now()
-            });
-
-            alert('송금이 완료되었습니다!');
-            document.getElementById('transfer-address').value = '';
-            document.getElementById('transfer-amount').value = '';
-            updateWalletUI();
-        }
-
-        async function createPost() {
-            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
-            let title = document.getElementById('board-title').value.trim();
-            let content = document.getElementById('board-content').value.trim();
-            if (!title || !content) { alert('제목과 내용을 입력해주세요.'); return; }
-
-            const userRef = window.FB.doc(window.db, "users", currentUser);
-            const userSnap = await window.FB.getDoc(userRef);
-
-            await window.FB.addDoc(window.FB.collection(window.db, "posts"), {
-                author: userSnap.data().nickname,
-                title: title,
-                content: content,
-                likes: 0,
-                likedUsers: [],
-                comments: [],
-                time: Date.now()
-            });
-
-            document.getElementById('board-title').value = '';
-            document.getElementById('board-content').value = '';
-            loadBoardData();
-        }
-
-        async function loadBoardData() {
-            const q = window.FB.query(window.FB.collection(window.db, "posts"), window.FB.orderBy("time", "desc"));
-            const querySnapshot = await window.FB.getDocs(q);
-            let container = document.getElementById('post-list');
-            container.innerHTML = '';
-
-            querySnapshot.forEach((docSnap) => {
-                let p = docSnap.data();
-                let pId = docSnap.id;
-
-                let card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-xl shadow space-y-2 text-sm";
-                card.innerHTML = `
-                    <div class="flex justify-between text-xs text-gray-400">
-                        <span>작성자: <b>${escapeHtml(p.author)}</b></span>
-                        <button onclick="likePost('${pId}')" class="text-red-500 hover:opacity-80"><i class="fa-solid fa-heart"></i> 좋아요 (${p.likes || 0})</button>
-                    </div>
-                    <h3 class="font-bold text-base text-gray-800">${escapeHtml(p.title)}</h3>
-                    <p class="text-gray-600 whitespace-pre-wrap">${escapeHtml(p.content)}</p>
-                    <div class="border-t pt-2 space-y-1">
-                        <div class="text-xs font-bold text-gray-500">댓글</div>
-                        <div class="space-y-1">
-                            ${(p.comments || []).map(c => `<div class="bg-gray-50 p-1 rounded text-xs"><b>${escapeHtml(c.author)}:</b> ${escapeHtml(c.text)}</div>`).join('')}
-                        </div>
-                        <div class="flex gap-1 mt-1">
-                            <input type="text" id="comment-input-${pId}" placeholder="댓글을 입력하세요" class="flex-1 border p-1 rounded text-xs">
-                            <button onclick="addComment('${pId}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs">등록</button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        async function likePost(postId) {
-            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
-
-            const postRef = window.FB.doc(window.db, "posts", postId);
-            const postSnap = await window.FB.getDoc(postRef);
-            if (!postSnap.exists()) return;
-
-            let p = postSnap.data();
-            let likedUsers = p.likedUsers || [];
-
-            if (likedUsers.includes(currentUser)) {
-                alert('이미 좋아요를 누른 게시물입니다!');
-                return;
-            }
-
-            likedUsers.push(currentUser);
-            let newLikes = (p.likes || 0) + 1;
-
-            await window.FB.updateDoc(postRef, {
-                likes: newLikes,
-                likedUsers: likedUsers
-            });
-
-            loadBoardData();
-        }
-
-        async function addComment(postId) {
-            if (!currentUser) { alert('로그인이 필요합니다!'); switchTab('profile'); return; }
-            let input = document.getElementById(`comment-input-${postId}`);
-            let text = input.value.trim();
-            if (!text) return;
-
-            const userRef = window.FB.doc(window.db, "users", currentUser);
-            const userSnap = await window.FB.getDoc(userRef);
-            
-            const postRef = window.FB.doc(window.db, "posts", postId);
-            const postSnap = await window.FB.getDoc(postRef);
-            let p = postSnap.data();
-            let comments = p.comments || [];
-
-            comments.push({ author: userSnap.data().nickname, text: text });
-            await window.FB.updateDoc(postRef, { comments: comments });
-            loadBoardData();
-        }
-
-        // 초기 화면 렌더링
-        renderStockButtons();
-        setTimeout(updateStockView, 100);
-        window.addEventListener('resize', updateStockView);
-    </script>
+      });
+
+      // Add to News Timeline
+      newsTimeline.unshift({
+        id: Date.now(),
+        title: `[속보] ${title}`,
+        desc: desc,
+        time: '방금 전',
+        impact: newsType
+      });
+
+      // Show Toast Notification
+      showToast(`🚨 [속보 발행 완료] ${title}`, isGood ? 'GOOD' : 'BAD');
+
+      // Refresh UI
+      renderStockList();
+      updateSelectedStockUI();
+      updateChartData();
+      renderNewsTimeline();
+
+      // Reset Form
+      document.getElementById('admin-news-title').value = '';
+      document.getElementById('admin-news-desc').value = '';
+      checkedBoxes.forEach(cb => cb.checked = false);
+
+      switchTab('news');
+    }
+
+    function renderNewsTimeline() {
+      const container = document.getElementById('news-timeline-container');
+      container.innerHTML = '';
+
+      newsTimeline.forEach(n => {
+        const isGood = n.impact === 'GOOD';
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border ${isGood ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'} space-y-2`;
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 text-[10px] rounded font-bold ${isGood ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${isGood ? '호재 뉴스 🚀' : '악재 뉴스 📉'}</span>
+            <span class="text-[11px] text-slate-500">${n.time}</span>
+          </div>
+          <h4 class="font-bold text-sm text-white">${n.title}</h4>
+          <p class="text-xs text-slate-300 leading-relaxed">${n.desc}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderCommunityPosts() {
+      const container = document.getElementById('community-posts-container');
+      container.innerHTML = '';
+
+      communityPosts.forEach(p => {
+        const post = document.createElement('div');
+        post.className = 'bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3';
+        post.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <div class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">${p.author.substring(0,2)}</div>
+              <span class="text-xs font-bold text-slate-200">${p.author}</span>
+            </div>
+            <span class="text-[11px] text-slate-500">${p.time}</span>
+          </div>
+          <h4 class="text-sm font-bold text-white">${p.title}</h4>
+          <p class="text-xs text-slate-300 leading-relaxed">${p.content}</p>
+          <div class="flex items-center justify-end space-x-3 text-xs text-slate-400 pt-2 border-t border-slate-800/60">
+            <button onclick="likePost(${p.id})" class="hover:text-rose-400 flex items-center space-x-1"><i class="fa-regular fa-heart"></i><span>${p.likes}</span></button>
+          </div>
+        `;
+        container.appendChild(post);
+      });
+    }
+
+    function addCommunityPost() {
+      const author = document.getElementById('post-author').value.trim() || '익명 개미';
+      const title = document.getElementById('post-title').value.trim();
+      const content = document.getElementById('post-content').value.trim();
+
+      if(!title || !content) return alert('제목과 내용을 작성해주세요.');
+
+      communityPosts.unshift({
+        id: Date.now(),
+        author: author,
+        title: title,
+        content: content,
+        time: '방금 전',
+        likes: 0
+      });
+
+      document.getElementById('post-title').value = '';
+      document.getElementById('post-content').value = '';
+      renderCommunityPosts();
+    }
+
+    function likePost(id) {
+      const p = communityPosts.find(x => x.id === id);
+      if(p) {
+        p.likes++;
+        renderCommunityPosts();
+      }
+    }
+
+    function renderRankings() {
+      const container = document.getElementById('rank-list-container');
+      container.innerHTML = '';
+
+      rankers.forEach((r, i) => {
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-4 bg-slate-950/60 rounded-xl border border-slate-800";
+        item.innerHTML = `
+          <div class="flex items-center space-x-4">
+            <span class="font-extrabold text-lg ${i===0?'text-yellow-400':i===1?'text-slate-300':i===2?'text-amber-600':'text-slate-500'}">#${i+1}</span>
+            <div>
+              <div class="font-bold text-xs text-white">${r.name}</div>
+              <div class="text-[10px] text-slate-400">총 자산: ${r.asset.toLocaleString()} KRW</div>
+            </div>
+          </div>
+          <span class="font-extrabold text-xs text-rose-500">${r.profit}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+  </script>
 </body>
 </html>
