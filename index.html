@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>STOCK & COIN ARENA | 주식 & 코인 대전</title>
+  <title>STOCK & COIN ARENA | 실시간 통합 모의투자 리그</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -42,7 +42,7 @@
 </head>
 <body class="bg-slate-950 text-gray-100 min-h-screen flex flex-col items-center justify-start antialiased selection:bg-blue-600 selection:text-white pb-20 sm:pb-0">
 
-  <!-- Mobile App Container -->
+  <!-- Mobile App Main Container -->
   <div class="w-full max-w-[600px] min-h-screen bg-slate-950 flex flex-col border-x border-slate-900 shadow-2xl relative pb-24">
 
     <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 flex items-center justify-between shadow-md">
@@ -54,7 +54,7 @@
           <h1 class="font-black text-base sm:text-lg tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
             주식 & 코인 대전
           </h1>
-          <p class="text-[10px] text-slate-400 font-medium">실시간 통합 모의투자 리그</p>
+          <p class="text-[10px] text-slate-400 font-medium">실시간 통합 모의투자 리그 (Firestore 동기화)</p>
         </div>
       </div>
 
@@ -66,10 +66,10 @@
       </div>
     </header>
 
-    <!-- Toast Container -->
+    <!-- Global Toast Container -->
     <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-[560px] pointer-events-none space-y-2"></div>
 
-    <!-- Quick Asset Banner -->
+    <!-- Quick Asset Status Banner -->
     <section class="bg-slate-900/80 border-b border-slate-800/80 px-4 py-2.5 flex items-center justify-between text-xs">
       <div class="flex items-center space-x-1">
         <span class="text-slate-400">보유 현금:</span>
@@ -81,7 +81,6 @@
       </div>
     </section>
 
-    <!-- Navigation Tabs Bar (Top Category Nav) -->
     <nav class="sticky top-[57px] z-30 bg-slate-900/95 border-b border-slate-800/80 backdrop-blur-md">
       <div class="flex overflow-x-auto text-xs font-bold divide-x divide-slate-800/40 no-scrollbar">
         <button onclick="switchTab('market')" id="tab-btn-market" class="tab-btn flex-1 py-3 px-2 text-center border-b-2 border-blue-500 text-blue-400 whitespace-nowrap flex items-center justify-center space-x-1">
@@ -110,7 +109,6 @@
 
     <main class="p-3 sm:p-4 space-y-4 flex-1">
 
-      <!-- TAB 1: MARKET EXCHANGE VIEW -->
       <section id="tab-market" class="tab-content space-y-4">
         
         <!-- Category & Search Bar -->
@@ -127,7 +125,7 @@
           </div>
         </div>
 
-        <!-- Selected Asset Header & Lightweight Chart -->
+        <!-- Selected Asset Header & Chart Container -->
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3 shadow-lg">
           <div class="flex items-center justify-between">
             <div>
@@ -137,7 +135,7 @@
               </div>
               <div class="flex items-baseline space-x-2 mt-1">
                 <span id="selected-price" class="text-2xl font-black text-rose-500">74,500 KRW</span>
-                <span id="selected-change" class="text-xs font-bold text-rose-500">+2.34%</span>
+                <span id="selected-change" class="text-xs font-bold text-rose-500">+0.00%</span>
               </div>
             </div>
 
@@ -151,7 +149,7 @@
             <div id="lightweight_chart_container" class="w-full h-full"></div>
           </div>
 
-          <!-- Order Execution Panel -->
+          <!-- Trading Order Panel -->
           <div class="grid grid-cols-2 gap-3 pt-1">
             <!-- Buy Order -->
             <div class="bg-slate-950/80 p-3 rounded-xl border border-rose-900/40 space-y-2">
@@ -191,7 +189,7 @@
           </div>
         </div>
 
-        <!-- Stock List Grid Container -->
+        <!-- Stock List Grid -->
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-3 space-y-2">
           <div class="flex items-center justify-between px-2 py-1 text-[11px] text-slate-400 font-bold border-b border-slate-800">
             <span>한글 종목명 / 구분</span>
@@ -206,19 +204,17 @@
 
       </section>
 
-      <!-- TAB 2: NEWS VIEW -->
       <section id="tab-news" class="tab-content hidden space-y-4">
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
           <h3 class="text-sm font-bold text-white flex items-center">
             <i class="fa-solid fa-bolt text-amber-400 mr-2"></i>실시간 뉴스 및 속보 피드
           </h3>
-          <p class="text-[11px] text-slate-400">시장에 영향을 미치는 주요 공시 및 뉴스 정보입니다.</p>
+          <p class="text-[11px] text-slate-400">Firestore로 실시간 모든 트레이더에게 동시에 동기화되는 주요 뉴스 피드입니다.</p>
           <div id="news-timeline-container" class="space-y-3">
           </div>
         </div>
       </section>
 
-      <!-- TAB 3: RANKINGS VIEW -->
       <section id="tab-rank" class="tab-content hidden space-y-4">
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -228,7 +224,7 @@
               </h3>
               <p class="text-[11px] text-slate-400">Firestore 등록 참여자들의 실시간 총자산 순위입니다.</p>
             </div>
-            <button onclick="fetchFirestoreRankings()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-lg">
+            <button onclick="renderRankings()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 rounded-lg">
               <i class="fa-solid fa-rotate-right mr-1"></i>새로고침
             </button>
           </div>
@@ -237,7 +233,6 @@
         </div>
       </section>
 
-      <!-- TAB 4: COMMUNITY BOARD VIEW -->
       <section id="tab-community" class="tab-content hidden space-y-4">
         <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3">
           <h3 class="text-sm font-bold text-white flex items-center">
@@ -254,7 +249,6 @@
         </div>
       </section>
 
-      <!-- TAB 5: PORTFOLIO & WALLET VIEW -->
       <section id="tab-portfolio" class="tab-content hidden space-y-4">
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-1">
@@ -271,7 +265,7 @@
 
         <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3">
           <h3 class="text-sm font-bold text-white flex items-center">
-            <i class="fa-solid fa-paper-plane text-emerald-400 mr-2"></i>내 지갑 자산 송금하기
+            <i class="fa-solid fa-paper-plane text-emerald-400 mr-2"></i>내 지갑 자산 송금하기 (실시간 P2P)
           </h3>
           <p class="text-[11px] text-slate-400">다른 트레이더 닉네임으로 현금(KRW)을 실시간 송금합니다.</p>
           <div class="space-y-2">
@@ -303,9 +297,8 @@
         </div>
       </section>
 
-      <!-- TAB 6: PROFILE / AUTH VIEW -->
       <section id="tab-profile" class="tab-content hidden space-y-4">
-        <!-- Logged Out Container: Dual Forms (Login / Signup) -->
+        <!-- Logged Out Section -->
         <div id="profile-logged-out" class="space-y-4">
           <!-- Login Form -->
           <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
@@ -328,7 +321,7 @@
             </div>
           </div>
 
-          <!-- Register Form -->
+          <!-- Registration Form -->
           <div class="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
             <div class="flex items-center space-x-2 border-b border-slate-800 pb-3">
               <i class="fa-solid fa-user-plus text-emerald-400 text-lg"></i>
@@ -358,7 +351,7 @@
           </div>
         </div>
 
-        <!-- Logged In Container -->
+        <!-- Logged In Section -->
         <div id="profile-logged-in" class="hidden bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
           <div class="flex items-center space-x-3 border-b border-slate-800 pb-4">
             <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black text-lg shadow-md">
@@ -392,7 +385,6 @@
         </div>
       </section>
 
-      <!-- TAB 7: ADMIN CONTROL PANEL VIEW -->
       <section id="tab-admin" class="tab-content hidden space-y-4">
         <div class="bg-slate-900 rounded-2xl border border-amber-500/40 p-4 space-y-4 shadow-xl">
           <div class="flex items-center space-x-3 border-b border-slate-800 pb-3">
@@ -432,7 +424,7 @@
             </div>
 
             <button onclick="publishAdminNews()" class="w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition">
-              <i class="fa-solid fa-bullhorn mr-1.5"></i>속보 발행 및 Firebase 저장
+              <i class="fa-solid fa-bullhorn mr-1.5"></i>속보 발행 및 Firebase 실시간 전송
             </button>
           </div>
         </div>
@@ -440,6 +432,7 @@
 
     </main>
 
+    <!-- Bottom Navigation Bar -->
     <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] bg-slate-900/95 border-t border-slate-800/80 backdrop-blur-md z-40 px-2 py-1.5 flex justify-around items-center text-[10px]">
       <button onclick="switchTab('market')" id="bnav-market" class="bnav-btn flex flex-col items-center p-1 text-blue-400">
         <i class="fa-solid fa-chart-line text-base mb-0.5"></i>
@@ -469,7 +462,7 @@
 
   </div>
 
-  <!-- Admin Auth Modal Dialog -->
+  <!-- Admin Auth Modal -->
   <div id="admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-sm p-5 rounded-2xl shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
@@ -491,15 +484,21 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, collection, addDoc, setDoc, getDoc, updateDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'stock-crypto-arena';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-      projectId: "stook-214a2",
+    // User specified Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBs_iCpQVXHqRu4KMSfBmLwD4kZwUeSvzs",
       authDomain: "stook-214a2.firebaseapp.com",
-      storageBucket: "stook-214a2.appspot.com"
+      projectId: "stook-214a2",
+      storageBucket: "stook-214a2.firebasestorage.app",
+      messagingSenderId: "629084155573",
+      appId: "1:629084155573:web:69f07358619eccb50518fc",
+      measurementId: "G-1088J3Y3QF"
     };
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'stook-arena';
 
     let app, auth, db;
 
@@ -512,7 +511,7 @@
       window.firebaseDb = db;
       window.firebaseAppId = appId;
 
-      // Rule 3: Auth First & mandatory anonymous login fallback
+      // Auth First rule
       const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
       if (token) {
         await signInWithCustomToken(auth, token).catch(() => signInAnonymously(auth));
@@ -520,57 +519,122 @@
         await signInAnonymously(auth).catch((e) => console.log("Anonymous auth fallback:", e));
       }
 
-      initFirebaseListeners();
+      initFirebaseRealtimeListeners();
     } catch(err) {
       console.warn("Firebase initialization notice:", err);
     }
 
-    function initFirebaseListeners() {
-      if (!db) return;
-
-      const newsCol = collection(db, 'artifacts', appId, 'public', 'data', 'custom_news');
-      onSnapshot(newsCol, (snapshot) => {
-        let loadedNews = [];
-        snapshot.forEach(doc => {
-          loadedNews.push({ id: doc.id, ...doc.data() });
-        });
-        if(loadedNews.length > 0) {
-          window.dbCustomNews = loadedNews;
-          if (typeof window.renderNewsTimeline === 'function') {
-            window.renderNewsTimeline();
-          }
-        }
-      }, (error) => console.log("News snapshot error:", error));
-
-      const postsCol = collection(db, 'artifacts', appId, 'public', 'data', 'community_posts');
-      onSnapshot(postsCol, (snapshot) => {
-        let posts = [];
-        snapshot.forEach(doc => {
-          posts.push({ id: doc.id, ...doc.data() });
-        });
-        posts.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
-        if(posts.length > 0) {
-          window.communityPosts = posts;
-          if (typeof window.renderCommunityPosts === 'function') {
-            window.renderCommunityPosts();
-          }
-        }
-      }, (error) => console.log("Posts snapshot error:", error));
+    // Mandatory Rule 1 Collection path helpers
+    function getPublicCollection(collectionName) {
+      return collection(db, 'artifacts', appId, 'public', 'data', collectionName);
     }
 
-    // Export functions to global scope for HTML event handlers
+    function getPublicDoc(collectionName, docId) {
+      return doc(db, 'artifacts', appId, 'public', 'data', collectionName, docId);
+    }
+
+    function initFirebaseRealtimeListeners() {
+      if (!db) return;
+
+      // 1. REALTIME MARKET PRICES & CANDLESTICKS SYNC
+      const marketDocRef = getPublicDoc('market', 'prices');
+      onSnapshot(marketDocRef, (snap) => {
+        if (snap.exists()) {
+          const remoteData = snap.data();
+          if (remoteData.stocks && Array.isArray(remoteData.stocks)) {
+            // Update local memory with synced remote prices
+            remoteData.stocks.forEach(rs => {
+              const local = window.stocks.find(s => s.name === rs.name);
+              if (local) {
+                local.price = rs.price;
+                local.prevPrice = rs.prevPrice;
+                if (rs.candles) local.candles = rs.candles;
+              }
+            });
+            window.renderStockList();
+            window.updateSelectedStockUI();
+            window.updateLightweightChartData();
+            window.updateWalletUI();
+          }
+        } else {
+          // Initialize market data in Firestore if empty
+          window.syncMarketToFirestore();
+        }
+      }, (error) => console.log("Market snapshot error:", error));
+
+      // 2. REALTIME NEWS SNAPSHOT
+      const newsCol = getPublicCollection('news');
+      let initialNewsLoaded = false;
+      onSnapshot(newsCol, (snapshot) => {
+        let newsList = [];
+        snapshot.forEach(docSnap => {
+          newsList.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        newsList.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+        if (initialNewsLoaded && newsList.length > (window.dbCustomNews ? window.dbCustomNews.length : 0)) {
+          const latest = newsList[0];
+          if (latest) {
+            window.showToast(`🚨 [속보] ${latest.title}`, latest.impact === 'GOOD' ? 'GOOD' : 'BAD');
+          }
+        }
+        initialNewsLoaded = true;
+        window.dbCustomNews = newsList;
+        window.renderNewsTimeline();
+      }, (error) => console.log("News snapshot error:", error));
+
+      // 3. REALTIME COMMUNITY BOARD SNAPSHOT
+      const postsCol = getPublicCollection('posts');
+      onSnapshot(postsCol, (snapshot) => {
+        let posts = [];
+        snapshot.forEach(docSnap => {
+          posts.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        posts.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+        window.communityPosts = posts;
+        window.renderCommunityPosts();
+      }, (error) => console.log("Posts snapshot error:", error));
+
+      // 4. REALTIME LEADERBOARD & USERS SNAPSHOT
+      const usersCol = getPublicCollection('users');
+      onSnapshot(usersCol, (snapshot) => {
+        let userList = [];
+        snapshot.forEach(docSnap => {
+          userList.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        window.syncedUserList = userList;
+        window.renderRankings();
+
+        // If current session user updated remotely (e.g. money transfer received)
+        if (window.currentSessionUser) {
+          const updatedSelf = userList.find(u => u.id === window.currentSessionUser.id);
+          if (updatedSelf) {
+            if (updatedSelf.cash !== window.userWallet.cash) {
+              const diff = updatedSelf.cash - window.userWallet.cash;
+              if (diff > 0) {
+                window.showToast(`💰 [송금 수신] ${diff.toLocaleString()} KRW 입금되었습니다!`, 'GOOD');
+              }
+            }
+            window.currentSessionUser = updatedSelf;
+            window.userWallet.cash = updatedSelf.cash || 0;
+            window.userWallet.holdings = updatedSelf.portfolio || {};
+            window.updateWalletUI();
+          }
+        }
+      }, (error) => console.log("Users snapshot error:", error));
+    }
+
+    // Global Firestore Functions
     window.firestoreService = {
       async registerUser(userData) {
         if (!db) throw new Error("Database reference not available");
-        // Collection path according to mandatory Rule 1: public/data/users
-        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', userData.id);
+        const userDocRef = getPublicDoc('users', userData.id);
         const existingDoc = await getDoc(userDocRef);
         if (existingDoc.exists()) {
           throw new Error("EXISTS_ID");
         }
 
-        // Check nickname duplicate across collection
-        const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+        const usersColRef = getPublicCollection('users');
         const allUsersSnap = await getDocs(usersColRef);
         let nickExists = false;
         allUsersSnap.forEach(d => {
@@ -587,23 +651,19 @@
 
       async loginUser(id, password) {
         if (!db) throw new Error("Database reference not available");
-        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', id);
+        const userDocRef = getPublicDoc('users', id);
         const userDoc = await getDoc(userDocRef);
         
-        if (!userDoc.exists()) {
-          return null;
-        }
+        if (!userDoc.exists()) return null;
         
         const data = userDoc.data();
-        if (data.password !== password) {
-          return null;
-        }
+        if (data.password !== password) return null;
         return data;
       },
 
       async updateNickname(id, newNickname) {
         if (!db) return;
-        const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+        const usersColRef = getPublicCollection('users');
         const allUsersSnap = await getDocs(usersColRef);
         let nickExists = false;
         allUsersSnap.forEach(d => {
@@ -614,23 +674,68 @@
           throw new Error("EXISTS_NICKNAME");
         }
 
-        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', id);
+        const userDocRef = getPublicDoc('users', id);
         await updateDoc(userDocRef, { nickname: newNickname });
       },
 
       async updateUserWallet(id, cash, portfolio) {
         if (!db || !id) return;
-        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', id);
+        const userDocRef = getPublicDoc('users', id);
         await updateDoc(userDocRef, { cash, portfolio });
       },
 
-      async getAllUsers() {
-        if (!db) return [];
-        const usersColRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
-        const snap = await getDocs(usersColRef);
-        const list = [];
-        snap.forEach(d => list.push(d.data()));
-        return list;
+      async executeTransfer(senderId, recipientNickname, amount) {
+        if (!db) return;
+        const usersColRef = getPublicCollection('users');
+        const allUsersSnap = await getDocs(usersColRef);
+        let targetUserDoc = null;
+
+        allUsersSnap.forEach(d => {
+          if (d.data().nickname === recipientNickname) {
+            targetUserDoc = { id: d.id, ...d.data() };
+          }
+        });
+
+        if (!targetUserDoc) throw new Error("NOT_FOUND_RECIPIENT");
+
+        // Update Sender
+        const senderRef = getPublicDoc('users', senderId);
+        await updateDoc(senderRef, { cash: window.userWallet.cash });
+
+        // Update Recipient
+        const recipientRef = getPublicDoc('users', targetUserDoc.id);
+        await updateDoc(recipientRef, { cash: (targetUserDoc.cash || 0) + amount });
+      },
+
+      async updateMarketPrices(stocksData) {
+        if (!db) return;
+        const marketDocRef = getPublicDoc('market', 'prices');
+        const plainStocks = stocksData.map(s => ({
+          name: s.name,
+          category: s.category,
+          price: s.price,
+          prevPrice: s.prevPrice,
+          candles: s.candles.slice(-30) // preserve lightweight memory
+        }));
+        await setDoc(marketDocRef, { stocks: plainStocks, updatedAt: Date.now() }, { merge: true });
+      },
+
+      async publishNews(newsData) {
+        if (!db) return;
+        const newsCol = getPublicCollection('news');
+        await addDoc(newsCol, newsData);
+      },
+
+      async addPost(postData) {
+        if (!db) return;
+        const postsCol = getPublicCollection('posts');
+        await addDoc(postsCol, postData);
+      },
+
+      async likePost(postId, currentLikes) {
+        if (!db || !postId) return;
+        const postRef = getPublicDoc('posts', postId);
+        await updateDoc(postRef, { likes: currentLikes + 1 });
       }
     };
   </script>
@@ -642,8 +747,8 @@
     let selectedStockName = '삼성전자'; 
     let chartType = 'candlestick';
 
-    // Completely starts in logged-out state on app load
     let currentSessionUser = null; 
+    window.syncedUserList = [];
 
     let lwChart = null;
     let candlestickSeries = null;
@@ -653,6 +758,7 @@
       cash: 1000000,
       holdings: {}
     };
+    window.userWallet = userWallet;
 
     function generateHistoricalCandles(basePrice, count = 30) {
       const candles = [];
@@ -674,7 +780,7 @@
       return candles;
     }
 
-    // Pure Korean instrument names registry (Strict requirement 3)
+    // Korean Assets Registry
     let stocks = [
       // 국내 주식
       { name: '삼성전자', category: 'DOMESTIC', price: 74500, candles: generateHistoricalCandles(74500) },
@@ -695,7 +801,7 @@
       { name: '알파벳', category: 'OVERSEAS', price: 230000, candles: generateHistoricalCandles(230000) },
       { name: '팔란티어', category: 'OVERSEAS', price: 35000, candles: generateHistoricalCandles(35000) },
 
-      // 가상화폐 (영문 티커 전혀 사용 금지 - 오직 한글)
+      // 가상화폐 (순수 한글 종목명)
       { name: '비트코인', category: 'CRYPTO', price: 92000000, candles: generateHistoricalCandles(92000000) },
       { name: '이더리움', category: 'CRYPTO', price: 4800000, candles: generateHistoricalCandles(4800000) },
       { name: '솔라나', category: 'CRYPTO', price: 210000, candles: generateHistoricalCandles(210000) },
@@ -710,16 +816,10 @@
       s.prevPrice = s.candles[0].open;
       s.price = s.candles[s.candles.length - 1].close;
     });
+    window.stocks = stocks;
 
     window.dbCustomNews = [];
-    let localNewsTimeline = [
-      { id: 'n1', title: '[개장 속보] 비트코인 및 국내 글로벌 통합 시세 가동', desc: '한글 종목 연동 및 실시간 리그가 가동되었습니다.', timeStr: '10분 전', impact: 'GOOD' }
-    ];
-
-    window.communityPosts = [
-      { id: 'p1', author: '버핏의제자', title: '비트코인 모멘텀 지속 상승 예상', content: '차트 흐름이 매우 견고합니다.', timeStr: '5분 전', likes: 14 },
-      { id: 'p2', author: '삼성전자존버', title: '삼성전자 실적 호재 기다리는 중', content: '속보 발행 시 상승 전환 기대!', timeStr: '12분 전', likes: 9 }
-    ];
+    window.communityPosts = [];
 
     window.onload = function() {
       initLightweightChart();
@@ -728,10 +828,9 @@
       updateWalletUI();
       renderNewsTimeline();
       renderCommunityPosts();
-      fetchFirestoreRankings();
+      renderRankings();
       renderAdminStockSelector();
       startMarketSimulator();
-      startAutoNewsScheduler();
     };
 
     function initLightweightChart() {
@@ -800,6 +899,7 @@
 
       lwChart.timeScale().fitContent();
     }
+    window.updateLightweightChartData = updateLightweightChartData;
 
     function setChartType(type) {
       chartType = type;
@@ -817,7 +917,6 @@
       updateLightweightChartData();
     }
 
-    // Navigation Switcher for 6 Main Tabs
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(el => {
@@ -846,7 +945,7 @@
       }
 
       if(tabId === 'portfolio') renderPortfolioUI();
-      if(tabId === 'rank') fetchFirestoreRankings();
+      if(tabId === 'rank') renderRankings();
       if(tabId === 'market' && lwChart) {
         setTimeout(() => {
           const container = document.getElementById('lightweight_chart_container');
@@ -868,6 +967,7 @@
 
     function renderStockList() {
       const container = document.getElementById('stock-list-container');
+      if (!container) return;
       const search = (document.getElementById('search-input').value || '').toLowerCase();
       
       const filtered = stocks.filter(s => {
@@ -879,7 +979,7 @@
       container.innerHTML = '';
       filtered.forEach(s => {
         const diff = s.price - s.prevPrice;
-        const rate = ((diff / s.prevPrice) * 100).toFixed(2);
+        const rate = s.prevPrice ? ((diff / s.prevPrice) * 100).toFixed(2) : '0.00';
         const isUp = diff >= 0;
         const colorClass = isUp ? 'text-rose-500' : 'text-blue-400';
 
@@ -900,6 +1000,7 @@
         container.appendChild(item);
       });
     }
+    window.renderStockList = renderStockList;
 
     function selectStock(name) {
       selectedStockName = name;
@@ -917,7 +1018,7 @@
       document.getElementById('selected-price').innerText = `${stock.price.toLocaleString()} KRW`;
 
       const diff = stock.price - stock.prevPrice;
-      const rate = ((diff / stock.prevPrice) * 100).toFixed(2);
+      const rate = stock.prevPrice ? ((diff / stock.prevPrice) * 100).toFixed(2) : '0.00';
       const isUp = diff >= 0;
       const changeEl = document.getElementById('selected-change');
       changeEl.innerText = `${isUp ? '+' : ''}${rate}%`;
@@ -928,6 +1029,7 @@
       calculateBuyTotal();
       calculateSellTotal();
     }
+    window.updateSelectedStockUI = updateSelectedStockUI;
 
     function calculateBuyTotal() {
       const stock = stocks.find(s => s.name === selectedStockName);
@@ -959,7 +1061,7 @@
         const cost = stock.price * qty;
 
         if(userWallet.cash < cost) {
-          showToast('⚠️️ 보유 현금이 부족합니다!', 'BAD');
+          showToast('⚠ 보유 현금이 부족합니다!', 'BAD');
           return;
         }
 
@@ -1008,7 +1110,7 @@
       Object.keys(userWallet.holdings).forEach(name => {
         const h = userWallet.holdings[name];
         const s = stocks.find(x => x.name === name);
-        if(s) totalStockVal += s.price * h.qty;
+        if(s) totalStockVal += s.price * (h.qty || 0);
       });
 
       const totalAsset = userWallet.cash + totalStockVal;
@@ -1016,6 +1118,7 @@
       document.getElementById('header-total-asset').innerText = `${totalAsset.toLocaleString()} KRW`;
       document.getElementById('buy-available-cash').innerText = userWallet.cash.toLocaleString();
     }
+    window.updateWalletUI = updateWalletUI;
 
     function renderPortfolioUI() {
       let totalStockVal = 0;
@@ -1026,12 +1129,12 @@
       Object.keys(userWallet.holdings).forEach(name => {
         const h = userWallet.holdings[name];
         const s = stocks.find(x => x.name === name);
-        if(!s || h.qty <= 0) return;
+        if(!s || !h || h.qty <= 0) return;
 
         const evalVal = s.price * h.qty;
         const costVal = h.avgPrice * h.qty;
         const profit = evalVal - costVal;
-        const rate = ((profit / costVal) * 100).toFixed(2);
+        const rate = costVal > 0 ? ((profit / costVal) * 100).toFixed(2) : '0.00';
         const isUp = profit >= 0;
 
         totalStockVal += evalVal;
@@ -1062,7 +1165,7 @@
       profitRateEl.className = `text-[11px] font-bold ${totalProfit >= 0 ? 'text-rose-400' : 'text-blue-400'}`;
     }
 
-    function executeMoneyTransfer() {
+    async function executeMoneyTransfer() {
       if (!currentSessionUser) {
         showToast('⚠️ 송금 기능을 이용하려면 로그인 해주세요.', 'BAD');
         switchTab('profile');
@@ -1073,22 +1176,34 @@
       const amount = parseInt(document.getElementById('transfer-amount').value);
 
       if (!recipient) return alert('받는 사람의 닉네임을 입력해 주세요.');
+      if (recipient === currentSessionUser.nickname) return alert('본인에게는 송금할 수 없습니다.');
       if (!amount || amount < 1000) return alert('최소 송금 금액은 1,000 KRW 이상입니다.');
       if (userWallet.cash < amount) return alert('보유 현금이 부족합니다!');
 
-      userWallet.cash -= amount;
-      syncWalletToFirestore();
-      updateWalletUI();
-      renderPortfolioUI();
+      try {
+        userWallet.cash -= amount;
+        await window.firestoreService.executeTransfer(currentSessionUser.id, recipient, amount);
 
-      document.getElementById('transfer-recipient').value = '';
-      document.getElementById('transfer-amount').value = '';
+        updateWalletUI();
+        renderPortfolioUI();
 
-      showToast(`💸 [송금 완료] ${recipient}님에게 ${amount.toLocaleString()} KRW 전송!`, 'GOOD');
+        document.getElementById('transfer-recipient').value = '';
+        document.getElementById('transfer-amount').value = '';
+
+        showToast(`💸 [송금 완료] ${recipient}님에게 ${amount.toLocaleString()} KRW 전송!`, 'GOOD');
+      } catch(err) {
+        userWallet.cash += amount; // Rollback
+        if (err.message === "NOT_FOUND_RECIPIENT") {
+          alert("존재하지 않는 받으실 트레이더 닉네임입니다.");
+        } else {
+          alert("송금 오류 발생: " + err.message);
+        }
+      }
     }
 
     function resetAccount() {
       userWallet = { cash: 1000000, holdings: {} };
+      window.userWallet = userWallet;
       syncWalletToFirestore();
       updateWalletUI();
       renderPortfolioUI();
@@ -1101,19 +1216,16 @@
       const pw = document.getElementById('auth-pw').value;
       const pwConfirm = document.getElementById('auth-pw-confirm').value;
 
-      // 1. Mandatory field checks
       if (!id || !nickname || !pw || !pwConfirm) {
         alert('모든 필수 항목(아이디, 닉네임, 비밀번호, 비밀번호 확인)을 입력해 주세요.');
         return;
       }
 
-      // 2. Password matching check
       if (pw !== pwConfirm) {
         alert('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
         return;
       }
 
-      // Random wallet address generation for schema compliance
       const walletAddress = '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
 
       const newUserDoc = {
@@ -1129,13 +1241,11 @@
         await window.firestoreService.registerUser(newUserDoc);
         alert("회원가입이 완료되었습니다! 가입하신 아이디와 비밀번호로 로그인해주세요.");
 
-        // Form field reset
         document.getElementById('auth-id').value = '';
         document.getElementById('auth-nickname').value = '';
         document.getElementById('auth-pw').value = '';
         document.getElementById('auth-pw-confirm').value = '';
 
-        // Auto focus on login id field
         document.getElementById('login-id').focus();
       } catch (err) {
         if (err.message === "EXISTS_ID") {
@@ -1165,12 +1275,12 @@
         }
 
         currentSessionUser = user;
+        window.currentSessionUser = user;
         userWallet.cash = user.cash || 1000000;
         userWallet.holdings = user.portfolio || {};
 
         alert("로그인 성공!");
 
-        // Clear login input fields
         document.getElementById('login-id').value = '';
         document.getElementById('login-pw').value = '';
 
@@ -1183,7 +1293,9 @@
 
     function handleUserLogout() {
       currentSessionUser = null;
+      window.currentSessionUser = null;
       userWallet = { cash: 1000000, holdings: {} };
+      window.userWallet = userWallet;
 
       document.getElementById('profile-logged-out').classList.remove('hidden');
       document.getElementById('profile-logged-in').classList.add('hidden');
@@ -1206,7 +1318,7 @@
         document.getElementById('user-avatar-text').innerText = newName.substring(0,2);
         document.getElementById('edit-nickname-input').value = '';
 
-        fetchFirestoreRankings();
+        renderRankings();
         showToast('✨ 닉네임이 성공적으로 변경되었습니다!', 'GOOD');
       } catch (err) {
         if (err.message === "EXISTS_NICKNAME") {
@@ -1260,6 +1372,7 @@
 
     function renderAdminStockSelector() {
       const container = document.getElementById('admin-stock-selector');
+      if(!container) return;
       container.innerHTML = '';
       stocks.forEach(s => {
         const label = document.createElement('label');
@@ -1306,7 +1419,7 @@
       });
 
       const newsData = {
-        title: `[속보] ${title}`,
+        title: title,
         desc: desc,
         affectedNames: affectedNames,
         impact: newsType,
@@ -1314,22 +1427,10 @@
         timeStr: '방금 전'
       };
 
-      if (window.firebaseDb && window.firebaseAppId) {
-        try {
-          const newsCol = collection(window.firebaseDb, 'artifacts', window.firebaseAppId, 'public', 'data', 'custom_news');
-          await addDoc(newsCol, newsData);
-        } catch(e) {
-          console.error("Firestore news save error:", e);
-        }
+      if (window.firestoreService) {
+        await window.firestoreService.publishNews(newsData);
+        await syncMarketToFirestore();
       }
-
-      localNewsTimeline.unshift(newsData);
-      showToast(`🚨 [속보 발행 완료] ${title}`, isGood ? 'GOOD' : 'BAD');
-
-      renderStockList();
-      updateSelectedStockUI();
-      updateLightweightChartData();
-      renderNewsTimeline();
 
       document.getElementById('admin-news-title').value = '';
       document.getElementById('admin-news-desc').value = '';
@@ -1340,13 +1441,17 @@
 
     function renderNewsTimeline() {
       const container = document.getElementById('news-timeline-container');
+      if (!container) return;
       container.innerHTML = '';
 
-      const combinedNews = [...(window.dbCustomNews || []), ...localNewsTimeline];
-      const uniqueNews = Array.from(new Map(combinedNews.map(item => [item.title, item])).values());
-      uniqueNews.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+      const newsList = window.dbCustomNews || [];
 
-      uniqueNews.forEach(n => {
+      if (newsList.length === 0) {
+        container.innerHTML = '<div class="text-center text-xs text-slate-500 py-4">등록된 뉴스가 없습니다.</div>';
+        return;
+      }
+
+      newsList.forEach(n => {
         const isGood = n.impact === 'GOOD';
         const card = document.createElement('div');
         card.className = `p-3 rounded-xl border ${isGood ? 'bg-emerald-950/20 border-emerald-500/30' : 'bg-rose-950/20 border-rose-500/30'} space-y-1.5`;
@@ -1361,49 +1466,24 @@
         container.appendChild(card);
       });
     }
+    window.renderNewsTimeline = renderNewsTimeline;
 
-    function startAutoNewsScheduler() {
-      setInterval(() => {
-        const pool = (window.dbCustomNews && window.dbCustomNews.length > 0) ? window.dbCustomNews : localNewsTimeline;
-        if(pool.length === 0) return;
-
-        const randomNews = pool[Math.floor(Math.random() * pool.length)];
-        const isGood = randomNews.impact === 'GOOD';
-
-        const sampleCount = Math.floor(Math.random() * 3) + 1;
-        for(let i = 0; i < sampleCount; i++) {
-          const randomStock = stocks[Math.floor(Math.random() * stocks.length)];
-          const factor = (Math.random() * 0.10 + 0.05) * (isGood ? 1 : -1);
-          const oldPrice = randomStock.price;
-          randomStock.price = Math.round(randomStock.price * (1 + factor));
-
-          const lastCandle = randomStock.candles[randomStock.candles.length - 1];
-          const time = lastCandle ? lastCandle.time + 86400 : Math.floor(Date.now() / 1000);
-          randomStock.candles.push({
-            time: time,
-            open: oldPrice,
-            high: Math.max(oldPrice, randomStock.price),
-            low: Math.min(oldPrice, randomStock.price),
-            close: randomStock.price
-          });
-        }
-
-        showToast(`⚡ [시황 속보] ${randomNews.title}`, isGood ? 'GOOD' : 'BAD');
-        renderStockList();
-        updateSelectedStockUI();
-        updateLightweightChartData();
-        updateWalletUI();
-      }, 28000);
+    // Synchronize price ticks to Firestore
+    async function syncMarketToFirestore() {
+      if (window.firestoreService) {
+        await window.firestoreService.updateMarketPrices(stocks).catch(() => {});
+      }
     }
+    window.syncMarketToFirestore = syncMarketToFirestore;
 
     function startMarketSimulator() {
-      function tick() {
-        const sampleCount = Math.floor(Math.random() * 4) + 2;
+      setInterval(() => {
+        const sampleCount = Math.floor(Math.random() * 3) + 1;
         for(let i = 0; i < sampleCount; i++) {
           const idx = Math.floor(Math.random() * stocks.length);
           const stock = stocks[idx];
           
-          const pct = (Math.random() * 0.048 - 0.0235);
+          const pct = (Math.random() * 0.04 - 0.0195);
           let newPrice = Math.round(stock.price * (1 + pct));
           if(newPrice < 1) newPrice = 1;
 
@@ -1422,10 +1502,8 @@
         updateLightweightChartData();
         updateWalletUI();
 
-        const nextTime = Math.floor(Math.random() * 2500) + 1500;
-        setTimeout(tick, nextTime);
-      }
-      tick();
+        syncMarketToFirestore();
+      }, 5000);
     }
 
     async function addCommunityPost() {
@@ -1449,80 +1527,67 @@
         timeStr: '방금 전'
       };
 
-      if (window.firebaseDb && window.firebaseAppId) {
-        try {
-          const postsCol = collection(window.firebaseDb, 'artifacts', window.firebaseAppId, 'public', 'data', 'community_posts');
-          await addDoc(postsCol, newPost);
-        } catch(e) {
-          console.error("Firestore post error:", e);
-        }
+      if (window.firestoreService) {
+        await window.firestoreService.addPost(newPost);
       }
 
-      window.communityPosts.unshift(newPost);
       document.getElementById('post-title').value = '';
       document.getElementById('post-content').value = '';
-      renderCommunityPosts();
       showToast('📝 커뮤니티 게시물이 등록되었습니다!', 'GOOD');
     }
 
     function renderCommunityPosts() {
       const container = document.getElementById('community-posts-container');
+      if (!container) return;
       container.innerHTML = '';
 
-      window.communityPosts.forEach(p => {
+      const posts = window.communityPosts || [];
+
+      if (posts.length === 0) {
+        container.innerHTML = '<div class="text-center text-xs text-slate-500 py-4">게시글이 없습니다. 첫 의견을 나눠보세요!</div>';
+        return;
+      }
+
+      posts.forEach(p => {
         const post = document.createElement('div');
         post.className = 'bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-2';
         post.innerHTML = `
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white">${p.author.substring(0,2)}</div>
-              <span class="text-xs font-bold text-slate-200">${p.author}</span>
+              <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white">${p.author ? p.author.substring(0,2) : '유저'}</div>
+              <span class="text-xs font-bold text-slate-200">${p.author || '익명'}</span>
             </div>
             <span class="text-[10px] text-slate-500">${p.timeStr || '방금 전'}</span>
           </div>
           <h4 class="text-xs font-bold text-white">${p.title}</h4>
           <p class="text-[11px] text-slate-300 leading-relaxed">${p.content}</p>
           <div class="flex items-center justify-end text-[11px] text-slate-400 pt-1.5 border-t border-slate-800/60">
-            <button onclick="likePost('${p.id}')" class="hover:text-rose-400 flex items-center space-x-1"><i class="fa-regular fa-heart"></i><span>${p.likes || 0}</span></button>
+            <button onclick="likePost('${p.id}', ${p.likes || 0})" class="hover:text-rose-400 flex items-center space-x-1"><i class="fa-regular fa-heart"></i><span>${p.likes || 0}</span></button>
           </div>
         `;
         container.appendChild(post);
       });
     }
+    window.renderCommunityPosts = renderCommunityPosts;
 
-    function likePost(id) {
-      const p = window.communityPosts.find(x => x.id === id);
-      if(p) {
-        p.likes = (p.likes || 0) + 1;
-        renderCommunityPosts();
+    function likePost(id, currentLikes) {
+      if (window.firestoreService) {
+        window.firestoreService.likePost(id, currentLikes);
       }
     }
 
-    async function fetchFirestoreRankings() {
+    function renderRankings() {
       const container = document.getElementById('rank-list-container');
       if (!container) return;
 
-      container.innerHTML = '<div class="text-center text-xs text-slate-500 py-4">랭킹 데이터 불러오는 중...</div>';
+      const userList = window.syncedUserList || [];
 
-      let userList = [];
-      if (window.firestoreService) {
-        try {
-          userList = await window.firestoreService.getAllUsers();
-        } catch(e) {
-          console.warn("Ranking fetch notice:", e);
-        }
-      }
-
-      // Default mock benchmark rankers if db is empty
       if (userList.length === 0) {
-        userList = [
-          { nickname: '워렌버핏', cash: 50000000, portfolio: {} },
-          { nickname: '서학개미대장', cash: 25000000, portfolio: {} },
-          { nickname: '코인왕김떡상', cash: 12000000, portfolio: {} }
-        ];
+        container.innerHTML = '<div class="text-center text-xs text-slate-500 py-4">등록된 트레이더가 없습니다. 프로필에서 가입해보세요!</div>';
+        return;
       }
 
-      // Calculate total asset for each user based on real-time stock prices
+      // Live Asset Computation across all users
       const computedList = userList.map(u => {
         let totalVal = u.cash || 0;
         if (u.portfolio) {
@@ -1559,9 +1624,11 @@
         container.appendChild(item);
       });
     }
+    window.renderRankings = renderRankings;
 
     function showToast(msg, type = 'GOOD') {
       const container = document.getElementById('toast-container');
+      if (!container) return;
       const toast = document.createElement('div');
       
       const isGood = type === 'GOOD';
@@ -1584,6 +1651,7 @@
         if (toast.parentElement) toast.remove();
       }, 5000);
     }
+    window.showToast = showToast;
   </script>
 </body>
 </html>
